@@ -28,12 +28,5 @@ void errores(int argc, char *argv[]) {
 
 void tiempo_ejecucion(float tload, float tstore, float top, DIR *dirin, DIR *dirout,char archivo, char op){
     cout << "Input path: "<<dirin<<"\nOutput path: "<<dirout<<"File: "<<archivo<<" (time: "<<tload+top+tstore<<")\nLoad time: "<<tload;
-    cout <<op<<" time: "<<top<<;
-
-
-    Load time: 3442
-    Gauss time: 38909
-    Store time: 1642
-    File: "indir/169012.bmp"(time: 37209)
-    Load time: 2602
+    cout << op<<" time: "<<top<<"\nStore time: "<<tstore<<"\n";
 }
