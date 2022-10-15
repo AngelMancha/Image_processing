@@ -15,14 +15,15 @@ class Image{
 public:
     Image(int width, int height);
     ~Image();
-    [[nodiscard]] Color GetColor(int x, int y) const;
 
-    void SetColor(const Color& color, int x, int y);
     void Read(const char* path);
+    static bool Copy(const char *SRC, const char* DEST);
 
-    void Export(const char* path) const;
+    static int convert(long long int n);
+
 private:
     int m_width;
     int m_height;
     std::vector<Color> m_colors;
+
 };
