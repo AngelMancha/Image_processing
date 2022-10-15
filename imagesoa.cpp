@@ -17,17 +17,17 @@ Color Image::GetColor(int x, int y) const {
 
 void Image::SetColor(const Color &color, int x, int y) {
     m_colors[y*m_width+x].r = color.r;
-    m_colors[y*m_width+x].g = color.r;
-    m_colors[y*m_width+x].b = color.r;
+    m_colors[y*m_width+x].g = color.g;
+    m_colors[y*m_width+x].b = color.b;
 }
 
 
 void Image::Read(const char *path) {
     std::ifstream f;
-    f.open(path, std::ios::in | std::ios::binary);
+    f.open(path, ios::in | ios::binary);
     if(!f.is_open()){
         cout << "El fichero no pudo ser abierto" << endl;
-        return;
+        exit(-1);
     }
 
     const int fileheadersize = 14;
@@ -45,7 +45,6 @@ void Image::Read(const char *path) {
     unsigned char informationheader[informationheadersize];
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
 
-    int filesize = fileheader[2] + (fileheader[3]<<8) + (fileheader[4] << 16) + (fileheader[5] << 24);
     m_width = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
     m_height = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
     m_colors.resize(m_width*m_width);

@@ -2,9 +2,9 @@
 
 int main(){
 
-    Image copy(0,0);
-    copy.Read("balloon.bmp");
-    copy.Export("copy.bmp");
+    Image copia(0,0);
+    copia.Read("elephant.bmp");
+    copia.Export("copia.bmp");
 
 
 }
