@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cstring>
 #include <dirent.h>
-
+#include "Image.h"
 
 using namespace std;
 
@@ -30,3 +30,7 @@ void tiempo_ejecucion(float tload, float tstore, float top, DIR *dirin, DIR *dir
     cout << "Input path: "<<dirin<<"\nOutput path: "<<dirout<<"File: "<<archivo<<" (time: "<<tload+top+tstore<<")\nLoad time: "<<tload;
     cout << op<<" time: "<<top<<"\nStore time: "<<tstore<<"\n";
 }
+
+int main(){
+
+};

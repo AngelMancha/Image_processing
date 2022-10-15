@@ -21,6 +21,49 @@ void Image::SetColor(const Color &color, int x, int y) {
     m_colors[y*m_width+x].b = color.r;
 }
 
+
+void Image::Read(const char *path) {
+    std::ifstream f;
+    f.open(path, std::ios::in | std::ios::binary);
+    if(!f.is_open()){
+        cout << "El fichero no pudo ser abierto" << endl;
+        return;
+    }
+
+    const int fileheadersize = 14;
+    const int informationheadersize = 40;
+
+    unsigned char fileheader[fileheadersize];
+    f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
+
+    if(fileheader[0] != 'B' || fileheader[1] != 'M'){
+        cerr << "El archivo no es de tipo BMP " << endl;
+        f.close();
+        return;
+    }
+
+    unsigned char informationheader[informationheadersize];
+    f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
+
+    int filesize = fileheader[2] + (fileheader[3]<<8) + (fileheader[4] << 16) + (fileheader[5] << 24);
+    m_width = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
+    m_height = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
+    m_colors.resize(m_width*m_width);
+    const int paddingamount = ((4-(m_width*3)%4)%4);
+    for (int y = 0; y<m_height; y++){
+        for (int x = 0; x < m_width; x++) {
+            unsigned char color[3];
+            f.read(reinterpret_cast<char*>(color),3);
+            m_colors[y*m_width+x].r = static_cast<float>(color[2])/255.0f;
+            m_colors[y*m_width+x].g = static_cast<float>(color[1])/255.0f;
+            m_colors[y*m_width+x].b = static_cast<float>(color[0])/255.0f;
+        }
+        f.ignore(paddingamount);
+    }
+    f.close();
+    cout << "El fichero ha sido leido" << endl;
+}
+
 void Image::Export(const char* path) const {
     std::ofstream f;
     f.open(path, std::ios::out | std::ios::binary);
@@ -104,47 +147,3 @@ void Image::Export(const char* path) const {
     f.close();
     cout << "Archivo copiado\n";
 }
-
-
-void Image::Read(const char *path) {
-    std::ifstream f;
-    f.open(path, std::ios::in | std::ios::binary);
-    if(!f.is_open()){
-        cout << "El fichero no pudo ser abierto" << endl;
-        return;
-    }
-
-    const int fileheadersize = 14;
-    const int informationheadersize = 40;
-
-    unsigned char fileheader[fileheadersize];
-    f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
-
-    if(fileheader[0] != 'B' || fileheader[1] != 'M'){
-        cerr << "El archivo no es de tipo BITMAP " << endl;
-        f.close();
-        return;
-    }
-
-    unsigned char informationheader[informationheadersize];
-    f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
-
-    int filesize = fileheader[2] + (fileheader[3]<<8) + (fileheader[4] << 16) + (fileheader[5] << 24);
-    m_width = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
-    m_height = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
-    m_colors.resize(m_width*m_width);
-    const int paddingamount = ((4-(m_width*3)%4)%4);
-    for (int y = 0; y<m_height; y++){
-        for (int x = 0; x < m_width; x++) {
-            unsigned char color[3];
-            f.read(reinterpret_cast<char*>(color),3);
-            m_colors[y*m_width+x].r = static_cast<float>(color[2])/255.0f;
-            m_colors[y*m_width+x].g = static_cast<float>(color[1])/255.0f;
-            m_colors[y*m_width+x].b = static_cast<float>(color[0])/255.0f;
-        }
-        f.ignore(paddingamount);
-    }
-    f.close();
-    cout << "El fichero ha sido leido" << endl;
-}
-
