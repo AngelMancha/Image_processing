@@ -20,6 +20,7 @@ public:
 
     void Read(const char* path);
     bool Copy(const char *SRC, const char* DEST);
+    bool GrayScale(const char* path);
 
 private:
     int m_width;
@@ -36,4 +37,6 @@ private:
     void checkInformationHeader(std::ifstream &f, const unsigned char *informationheader) const;
 
     void readColor(std::ifstream &f, const int paddingamount);
+
+    void getWidthHeight(const unsigned char *informationheader);
 };
