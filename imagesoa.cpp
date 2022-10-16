@@ -21,21 +21,10 @@ void Image::Read(const char *path) {
     unsigned char fileheader[fileheadersize];
     unsigned char informationheader[informationheadersize];
     f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
-
-    if(fileheader[0] != 'B' || fileheader[1] != 'M'){
-        cerr << "El archivo no es de tipo BMP " << endl;
-        f.close();
-        return;
-    }
-
+    checkHeader(f, fileheader);
 
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
-
-    if(informationheader[14]!=24 || informationheader[12]!=1 || informationheader[16]!=0 || informationheader[17]!=0 || informationheader[18]!=0 || informationheader[19]!=0){
-        cerr << "El archivo no es de tipo BMP " << endl;
-        f.close();
-        return;
-    }
+    checkInformationHeader(f, informationheader);
 
     m_width = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
     m_height = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
@@ -53,6 +42,20 @@ void Image::Read(const char *path) {
     }
     f.close();
     cout << "El fichero ha sido leido" << endl;
+}
+
+void Image::checkInformationHeader(ifstream &f, const unsigned char *informationheader) const {
+    if(informationheader[14] != 24 || informationheader[12] != 1 || informationheader[16] != 0 || informationheader[17] != 0 || informationheader[18] != 0 || informationheader[19] != 0){
+        cerr << "El archivo no es de tipo BMP " << endl;
+        f.close();
+    }
+}
+
+void Image::checkHeader(ifstream &f, const unsigned char *fileheader) const {
+    if(fileheader[0] != 'B' || fileheader[1] != 'M'){
+        cerr << "El archivo no es de tipo BMP " << endl;
+        f.close();
+    }
 }
 
 void Image::openFile(const char *path, ifstream &f) const {

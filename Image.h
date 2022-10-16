@@ -27,4 +27,11 @@ private:
     std::vector<Color> m_colors;
 
     void openFile(const char *path, std::basic_ifstream<char> &f) const;
+
+    void checkHeader(std::ifstream &f, const int fileheadersize, const int informationheadersize,
+                     const unsigned char *fileheader, const unsigned char *informationheader) const;
+
+    void checkHeader(std::ifstream &f, const unsigned char *fileheader) const;
+
+    void checkInformationHeader(std::ifstream &f, const unsigned char *informationheader) const;
 };
