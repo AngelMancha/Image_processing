@@ -2,7 +2,7 @@
 
 int main(){
     Image copia(0,0);
-    copia.Copy("balloon.bmp","copia.bmp");
+    copia.Copy("elephant.bmp","copia.bmp");
 
 
 }

@@ -14,16 +14,12 @@ Image::~Image() = default;
 
 void Image::Read(const char *path) {
     std::ifstream f;
-    f.open(path, ios::in | ios::binary);
-    if(!f.is_open()){
-        cout << "El fichero no pudo ser abierto" << endl;
-        exit(-1);
-    }
-
+    openFile(path, f); // function to open the image and see if there is an error
+    // Variable definition
     const int fileheadersize = 14;
     const int informationheadersize = 40;
-
     unsigned char fileheader[fileheadersize];
+    unsigned char informationheader[informationheadersize];
     f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
 
     if(fileheader[0] != 'B' || fileheader[1] != 'M'){
@@ -32,7 +28,7 @@ void Image::Read(const char *path) {
         return;
     }
 
-    unsigned char informationheader[informationheadersize];
+
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
 
     if(informationheader[14]!=24 || informationheader[12]!=1 || informationheader[16]!=0 || informationheader[17]!=0 || informationheader[18]!=0 || informationheader[19]!=0){
@@ -57,6 +53,14 @@ void Image::Read(const char *path) {
     }
     f.close();
     cout << "El fichero ha sido leido" << endl;
+}
+
+void Image::openFile(const char *path, ifstream &f) const {
+    f.open(path, ios::in | ios::binary);
+    if(!f.is_open()){
+        cout << "El fichero no pudo ser abierto" << endl;
+        exit(-1);
+    }
 }
 
 bool Image::Copy(const char *SRC, const char* DEST) {

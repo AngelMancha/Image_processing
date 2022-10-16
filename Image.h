@@ -1,4 +1,6 @@
 #include <vector>
+#include <fstream>
+
 #ifndef ARCOS_PROYECTO1_IMAGE_H
 #define ARCOS_PROYECTO1_IMAGE_H
 
@@ -24,4 +26,5 @@ private:
     int m_height;
     std::vector<Color> m_colors;
 
+    void openFile(const char *path, std::basic_ifstream<char> &f) const;
 };
