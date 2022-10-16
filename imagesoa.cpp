@@ -1,7 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include "Image.h"
-#include <cmath>
+#include <math.h>
 using namespace std;
 
 
@@ -81,4 +81,88 @@ bool Image::Copy(const char *SRC, const char* DEST) {
     dest << src.rdbuf();
     cout << "El fichero ha sido copiado con exito"<<endl;
     return src && dest;
+}
+
+bool Image::GrayScale(const char* path) {
+    std::ifstream f;
+    openFile(path, f);
+    Image::Read(path);
+    std::ifstream src(path, std::ios::binary);
+    f.open(path, ios::in | ios::binary);
+    // Variable definition
+    const int informationheadersize = 40; //desde el byte 14 hasta el 54
+    unsigned char informationheader[informationheadersize];
+    f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
+    //Anchura en px de la imagen (Comprende desde el byte 18-21)
+    m_width = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
+    //Altura en px de la imagen (Comprende desde el byte 22-25)
+    m_height = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
+    m_colors.resize(m_width*m_height);
+    for (int y=0; y < m_height; y++) {
+        for (int pixel=0; pixel < m_width; pixel++) {
+            // 1. Normalizar los valores a una escala real de 0 y 1
+            unsigned char color[3];
+            f.read(reinterpret_cast<char*>(color),3);
+            float nr = static_cast<float>(color[2]) / 255; //nr
+            float ng = static_cast<float>(color[1]) / 255; //ng
+            float nb = static_cast<float>(color[0]) / 255; //nb
+            cout << "red: " << color[2] << endl;
+            cout << "green: " << ng << endl;
+            cout << "blue: " << nb << endl;
+            float cr, cg, cb;
+            // 2. Transformación a intensidad lineal
+            // Rojo
+            if ( nr <= 0.04045)
+            {
+                cr = nr/12.92;
+            }
+            if (nr > 0.04045)
+            {
+                float aux = ((nr+0.055)/1.055);
+                cr = pow(aux, 2.4);
+            }
+            // Green
+            if ( ng <= 0.04045)
+            {
+                cg = nr/12.92;
+            }
+            if (ng > 0.04045)
+            {
+                float aux = ((nr+0.055)/1.055);
+                cg = pow(aux, 2.4);
+            }
+            // Blue
+            if ( nb <= 0.04045)
+            {
+                cb = nb/12.92;
+            }
+            if (nb > 0.04045)
+            {
+                float aux = ((nb+0.055)/1.055);
+                cb = pow(aux, 2.4);
+            }
+            //3.Transformación lineal
+            float cl = 0.2126 * cr + 0.7152 * cg + 0.0722 * cb;
+
+            //4. Correción gamma
+            if (cl <= 0.0031308){
+                cg = 12.92 * cl;
+            }
+            if (cl > 0.0031308)
+                cg = 1.055 * pow(cl, (1/2.4)) - 0.055;
+
+            // 5. Desnormalizacion
+            float g = cg * 255;
+
+            // Asignamos a los 3 componentes el mismo valor
+            m_colors[y * m_width + pixel].r = g;
+            m_colors[y * m_width + pixel].g = g;
+            m_colors[y * m_width + pixel].b = g;
+        }
+    }
+
+
+    f.close(); // esto se deja
+    cout << "El fichero ha sido leido" << endl;
+    return 0;
 }
