@@ -27,7 +27,7 @@ void Image::Read(const char *path) {
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
     checkInformationHeader(f, informationheader);  // Restricción para que el fichero pueda ser válido
 
-    //Anchura en px de la imagen (Comprende desde el byte 18-21)
+    //Anchura en px de la imagen (Comprende desde el byte 18-21) Patata
     m_width = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
     //Altura en px de la imagen (Comprende desde el byte 22-25)
     m_height = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
@@ -82,3 +82,4 @@ bool Image::Copy(const char *SRC, const char* DEST) {
     cout << "El fichero ha sido copiado con exito"<<endl;
     return src && dest;
 }
+
