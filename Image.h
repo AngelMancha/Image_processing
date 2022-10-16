@@ -34,4 +34,6 @@ private:
     void checkHeader(std::ifstream &f, const unsigned char *fileheader) const;
 
     void checkInformationHeader(std::ifstream &f, const unsigned char *informationheader) const;
+
+    void readColor(std::ifstream &f, const int paddingamount);
 };
