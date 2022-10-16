@@ -35,6 +35,12 @@ void Image::Read(const char *path) {
     unsigned char informationheader[informationheadersize];
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
 
+    if(informationheader[14]!=24 || informationheader[12]!=1 || informationheader[16]!=0 || informationheader[17]!=0 || informationheader[18]!=0 || informationheader[19]!=0){
+        cerr << "El archivo no es de tipo BMP " << endl;
+        f.close();
+        return;
+    }
+
     m_width = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
     m_height = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
     m_colors.resize(m_width*m_height);
@@ -54,20 +60,10 @@ void Image::Read(const char *path) {
 }
 
 bool Image::Copy(const char *SRC, const char* DEST) {
+    Image::Read(SRC);
     std::ifstream src(SRC, std::ios::binary);
     std::ofstream dest(DEST, std::ios::binary);
     dest << src.rdbuf();
+    cout << "El fichero ha sido copiado con exito"<<endl;
     return src && dest;
-}
-
-int Image::convert(long long n){
-    int dec = 0, i = 0, rem;
-
-    while (n!=0) {
-        rem = n % 10;
-        n /= 10;
-        dec += rem * pow(2, i);
-        ++i;
-    }
-    return dec;
 }

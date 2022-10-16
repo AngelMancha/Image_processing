@@ -17,9 +17,7 @@ public:
     ~Image();
 
     void Read(const char* path);
-    static bool Copy(const char *SRC, const char* DEST);
-
-    static int convert(long long int n);
+    bool Copy(const char *SRC, const char* DEST);
 
 private:
     int m_width;
