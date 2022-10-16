@@ -26,17 +26,22 @@ void Image::Read(const char *path) {
 
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
     checkInformationHeader(f, informationheader);  // Restricción para que el fichero pueda ser válido
+    getWidthHeight(informationheader);
 
-    //Anchura en px de la imagen (Comprende desde el byte 18-21)
-    m_width = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
-    //Altura en px de la imagen (Comprende desde el byte 22-25)
-    m_height = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
     m_colors.resize(m_width*m_height);
     const int paddingamount = ((4-(m_width*3)%4)%4);
     readColor(f, paddingamount);
     f.close();
     cout << "El fichero ha sido leido" << endl;
 }
+
+void Image::getWidthHeight(
+        const unsigned char *informationheader) {//Anchura en px de la imagen (Comprende desde el byte 18-21)
+    m_width = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
+    //Altura en px de la imagen (Comprende desde el byte 22-25)
+    m_height = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
+}
+
 
 void Image::readColor(ifstream &f, const int paddingamount) {
     for (int y = 0; y < m_height; y++){
@@ -82,3 +87,5 @@ bool Image::Copy(const char *SRC, const char* DEST) {
     cout << "El fichero ha sido copiado con exito"<<endl;
     return src && dest;
 }
+
+
