@@ -39,4 +39,6 @@ private:
     void readColor(std::ifstream &f, const int paddingamount);
 
     void getWidthHeight(const unsigned char *informationheader);
+
+    Color GetColor(int x, int y) const;
 };

@@ -29,13 +29,16 @@ void Image::Read(const char *path) {
 
     //Anchura en px de la imagen (Comprende desde el byte 18-21)
     m_width = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
+    cout << "ancho1: " << m_width << endl;
     //Altura en px de la imagen (Comprende desde el byte 22-25)
     m_height = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
+    cout << "altura1: " << m_height << endl;
     m_colors.resize(m_width*m_height);
     const int paddingamount = ((4-(m_width*3)%4)%4);
     readColor(f, paddingamount);
     f.close();
     cout << "El fichero ha sido leido" << endl;
+
 }
 
 void Image::readColor(ifstream &f, const int paddingamount) {
@@ -94,7 +97,7 @@ bool Image::GrayScale(const char* path) {
     unsigned char informationheader[informationheadersize];
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
     //Anchura en px de la imagen (Comprende desde el byte 18-21)
-    m_width = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
+    cout << "ancho2: " << m_width << endl;
     //Altura en px de la imagen (Comprende desde el byte 22-25)
     m_height = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
     m_colors.resize(m_width*m_height);
@@ -103,12 +106,9 @@ bool Image::GrayScale(const char* path) {
             // 1. Normalizar los valores a una escala real de 0 y 1
             unsigned char color[3];
             f.read(reinterpret_cast<char*>(color),3);
-            float nr = static_cast<float>(color[2]) / 255; //nr
-            float ng = static_cast<float>(color[1]) / 255; //ng
-            float nb = static_cast<float>(color[0]) / 255; //nb
-            cout << "red: " << color[2] << endl;
-            cout << "green: " << ng << endl;
-            cout << "blue: " << nb << endl;
+            float nr = static_cast<float>(color[2])/ 255.0f); //nr
+            float ng = static_cast<float>(GetColor(pixel,y).g / 255); //ng
+            float nb = static_cast<float>(GetColor(pixel,y).b / 255); //nb
             float cr, cg, cb;
             // 2. Transformación a intensidad lineal
             // Rojo
@@ -166,3 +166,8 @@ bool Image::GrayScale(const char* path) {
     cout << "El fichero ha sido leido" << endl;
     return 0;
 }
+
+Color Image::GetColor(int x, int y) const {
+    return m_colors[y*m_width+x];
+}
+
