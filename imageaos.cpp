@@ -6,17 +6,17 @@ const int file_header_size = 14; //tamaño cabecera bitmap (bytes 14-17)
 const int info_header_size = 40; //desde el byte 14 hasta el 54
 
 struct Image {
-    const int width;
-    const int height;
-    const int colors;
+    int width;
+    int height;
+    int colors;
 };
 
 struct bitmap_file_header
 {
-    const char name[2];  //specifies the file type "BM"
-    const unsigned int size;  //specifies the size in bytes of the bitmap file
-    const int  garbage;  //reserved; must be 0
-    const unsigned int image_ffset;  //reserved; must be 0
+    char name[2];  //specifies the file type "BM"
+    unsigned int size;  //specifies the size in bytes of the bitmap file
+    int  garbage;  //reserved; must be 0
+    unsigned int image_ffset;  //reserved; must be 0
 };
 
 /*
@@ -46,14 +46,6 @@ void read_image(const char* path) {
         exit(-1);
     }
 
-    //leer desde la estructura file header
-    struct bitmap_file_header fileheader;
-    fread(fileheader.name, 2, 1, fp);
-
-
-
-
-
     char file_header[file_header_size];
     // Leemos el contenido de la imagen y guardamos sus valores en el char file_header
     image.read(file_header, file_header_size);
@@ -64,5 +56,5 @@ void read_image(const char* path) {
     }
     // Una vez comprobado el archivo de cabecera, guardamos la información en nuestra
     // estructura de bitmap_file_header
-    bitmap_file_header pppp;
+    bitmap_file_header fileHeader;
 }

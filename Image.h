@@ -15,17 +15,20 @@ struct Color{
 
 class Image{
 public:
-    Image(int width, int height);
-    ~Image();
+    Image(int width, int height); // constructor de la clase
+    ~Image();// destructor
 
     void Read(const char* path);
     bool Copy(const char *SRC, const char* DEST);
-    bool GrayScale(const char* path);
+    void GrayScale(const char* SRC, const char* DST);
+    void Export(const char *path) const;
+
+
 
 private:
-    int m_width;
-    int m_height;
-    std::vector<Color> m_colors;
+    int m_width; // atributo para definit la altura de la imagen en px
+    int m_height; // atributo para definit la altura de la imagen en px
+    std::vector<Color> m_colors; // vector donde guardamos la ESTRUCTURA de los colores
 
     void openFile(const char *path, std::basic_ifstream<char> &f) const;
 
@@ -41,4 +44,5 @@ private:
     void getWidthHeight(const unsigned char *informationheader);
 
     Color GetColor(int x, int y) const;
+
 };

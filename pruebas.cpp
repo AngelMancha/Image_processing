@@ -2,7 +2,6 @@
 
 int main(){
     Image copia(0,0);
-    copia.GrayScale("elephant.bmp");
-
+    copia.GrayScale("elephant.bmp", "prueba.bmp");
 
 }
