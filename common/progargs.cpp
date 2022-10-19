@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cstring>
 #include <dirent.h>
-#include "Image.h"
+#include "../soa/Image.h"
 
 using namespace std;
 
