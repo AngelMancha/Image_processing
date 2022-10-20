@@ -41,4 +41,6 @@ private:
     void readColor(std::ifstream &f, const int paddingamount);
     Color GetColor(int x, int y) const;
 
+    void Export2(std::ofstream &j, unsigned char *fileheader, unsigned char *informationheader, const int paddingamount,
+                 const int filesize) const;
 };

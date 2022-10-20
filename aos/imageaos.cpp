@@ -40,31 +40,28 @@ bool Image::Copy(const char *SRC, const char* DEST) {
 
 
 void Image::GrayScale(const char* SRC, const char* DST) {
+    /*we open the input and output files*/
     std::ifstream f;
     openFilein(SRC, f);
 
     std::ofstream j;
     openFileout(DST, j);
 
+    /*Leemos el archivo para así obtener el ancho, alto y el vector de colores*/
+    Image::Read(SRC);
+
     unsigned char fileheader[fileheadersize];
-    f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
-
-
-    if(fileheader[0] != 'B' || fileheader[1] != 'M'){
-        cerr << "El archivo no es de tipo BMP " << endl;
-        f.close();
-
-    }
-    unsigned char bmpPad[3] = {0, 0, 0};
-
     unsigned char informationheader[informationheadersize];
-    f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
-    m_width = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
-    m_height = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
-    m_colors.resize(m_width*m_height);
-
     const int paddingamount = ((4-(m_width*3)%4)%4);
     const int filesize = fileheadersize + informationheadersize + m_width * m_height * 3 + paddingamount * m_height;
+
+
+    f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
+    f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
+
+
+
+    /*Procedemos a realizar los cálculos pertinentes para la conversion a escala de grises*/
 
     for (int y = 0; y<m_height; y++){
         for (int x = 0; x < m_width; x++) {
@@ -126,33 +123,14 @@ void Image::GrayScale(const char* SRC, const char* DST) {
     }
 
     f.close();
+    /*Exportamos el archivo al fichero de salida*/
+    Export2(j, fileheader, informationheader, paddingamount, filesize);
 
 
-
-    fileheader[2] = filesize;
-    fileheader[10] = fileheadersize + informationheadersize;
-    j.write(reinterpret_cast<char *>(fileheader), fileheadersize);
-
-    informationheader[0] = informationheadersize;
-    j.write(reinterpret_cast<char *>(informationheader), informationheadersize);
-
-    for (int y = 0; y < m_height; y++) {
-        for (int x = 0; x < m_width; x++) {
-            unsigned char r = static_cast<unsigned char>(GetColor(x, y).r * 255.0f);
-            unsigned char g = static_cast<unsigned char>(GetColor(x, y).g * 255.0f);
-            unsigned char b = static_cast<unsigned char>(GetColor(x, y).b * 255.0f);
-
-            unsigned char color[] = {b, g, r};
-            j.write(reinterpret_cast<char *>(color), 3);
-        }
-        j.write(reinterpret_cast<char *>(bmpPad), paddingamount);
-    }
-
-    j.close();
-
-
-    cout << "El fichero ha sido leido" << endl;
+    cout << "El fichero ha convertido a escala de grises" << endl;
 }
+
+
 
 /* Funciones privadas*/
 
@@ -347,4 +325,30 @@ void Image::Export(const char* path) const {
 
     f.close();
     cout << "Archivo copiado\n";
+}
+
+void Image::Export2(ofstream &j, unsigned char *fileheader, unsigned char *informationheader, const int paddingamount,
+                    const int filesize) const {
+
+    unsigned char bmpPad[3] = {0, 0, 0};
+    fileheader[2] = filesize;
+    fileheader[10] = fileheadersize + informationheadersize;
+    j.write(reinterpret_cast<char *>(fileheader), fileheadersize);
+
+    informationheader[0] = informationheadersize;
+    j.write(reinterpret_cast<char *>(informationheader), informationheadersize);
+
+    for (int y = 0; y < m_height; y++) {
+        for (int x = 0; x < m_width; x++) {
+            unsigned char r = static_cast<unsigned char>(GetColor(x, y).r * 255.0f);
+            unsigned char g = static_cast<unsigned char>(GetColor(x, y).g * 255.0f);
+            unsigned char b = static_cast<unsigned char>(GetColor(x, y).b * 255.0f);
+
+            unsigned char color[] = {b, g, r};
+            j.write(reinterpret_cast<char *>(color), 3);
+        }
+        j.write(reinterpret_cast<char *>(bmpPad), paddingamount);
+    }
+
+    j.close();
 }
