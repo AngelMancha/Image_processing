@@ -41,20 +41,21 @@ bool Image::Copy(const char *SRC, const char* DEST) {
 
 void Image::GrayScale(const char* SRC, const char* DST) {
     std::ifstream f;
-    f.open(SRC, ios::in | ios::binary);
-    if(!f.is_open()){
-        cout << "El fichero no pudo ser abierto" << endl;
-        exit(-1);
-    }
+    openFilein(SRC, f);
+
+    std::ofstream j;
+    openFileout(DST, j);
 
     unsigned char fileheader[fileheadersize];
     f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
+
 
     if(fileheader[0] != 'B' || fileheader[1] != 'M'){
         cerr << "El archivo no es de tipo BMP " << endl;
         f.close();
 
     }
+    unsigned char bmpPad[3] = {0, 0, 0};
 
     unsigned char informationheader[informationheadersize];
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
@@ -63,6 +64,7 @@ void Image::GrayScale(const char* SRC, const char* DST) {
     m_colors.resize(m_width*m_height);
 
     const int paddingamount = ((4-(m_width*3)%4)%4);
+    const int filesize = fileheadersize + informationheadersize + m_width * m_height * 3 + paddingamount * m_height;
 
     for (int y = 0; y<m_height; y++){
         for (int x = 0; x < m_width; x++) {
@@ -125,7 +127,30 @@ void Image::GrayScale(const char* SRC, const char* DST) {
 
     f.close();
 
-    Image::Export(DST);
+
+
+    fileheader[2] = filesize;
+    fileheader[10] = fileheadersize + informationheadersize;
+    j.write(reinterpret_cast<char *>(fileheader), fileheadersize);
+
+    informationheader[0] = informationheadersize;
+    j.write(reinterpret_cast<char *>(informationheader), informationheadersize);
+
+    for (int y = 0; y < m_height; y++) {
+        for (int x = 0; x < m_width; x++) {
+            unsigned char r = static_cast<unsigned char>(GetColor(x, y).r * 255.0f);
+            unsigned char g = static_cast<unsigned char>(GetColor(x, y).g * 255.0f);
+            unsigned char b = static_cast<unsigned char>(GetColor(x, y).b * 255.0f);
+
+            unsigned char color[] = {b, g, r};
+            j.write(reinterpret_cast<char *>(color), 3);
+        }
+        j.write(reinterpret_cast<char *>(bmpPad), paddingamount);
+    }
+
+    j.close();
+
+
     cout << "El fichero ha sido leido" << endl;
 }
 
@@ -136,7 +161,7 @@ void Image::Read(const char *path) {
      * Image los valores para m_width, m_height y m_colors */
 
     std::ifstream f;
-    openFile(path, f);
+    openFilein(path, f);
 
     // Definimos 2 arrays que contienen la cabecera y la información de cabecera y hacemos comprobaciones
     unsigned char fileheader[fileheadersize]; //desde el byte 0 hasta el 14 --> Contiene el byte hasta el tamaño de cabecera de BMP
@@ -200,9 +225,18 @@ void Image::checkHeader(ifstream &f, const unsigned char *fileheader) {
 }
 
 
-void Image::openFile(const char *path, ifstream &f) {
+void Image::openFilein(const char *path, ifstream &f) {
     /* function to open the image and see if there is an error */
     f.open(path, ios::in | ios::binary);
+    if(!f.is_open()){
+        cout << "El fichero no pudo ser abierto" << endl;
+        exit(-1);
+    }
+}
+
+void Image::openFileout(const char *path, ofstream &f) {
+    /* function to open the image and see if there is an error */
+    f.open(path, ios::out | ios::binary);
     if(!f.is_open()){
         cout << "El fichero no pudo ser abierto" << endl;
         exit(-1);

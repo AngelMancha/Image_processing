@@ -33,7 +33,8 @@ private:
     int m_height; // atributo para definit la altura de la imagen en px
     std::vector<Color> m_colors; // vector donde guardamos la ESTRUCTURA de los colores
 
-    static void openFile(const char *path, std::basic_ifstream<char> &f) ;
+    static void openFilein(const char *path, std::basic_ifstream<char> &f) ;
+    static void openFileout(const char *path, std::basic_ofstream<char> &f) ;
     void Read(const char* path);
     static void checkHeader(std::ifstream &f, const unsigned char *fileheader) ;
     static void checkInformationHeader(std::ifstream &f, const unsigned char *informationheader) ;
