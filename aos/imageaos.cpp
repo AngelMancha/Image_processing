@@ -58,7 +58,7 @@ void Image::Histograma(const char *path, const char *end){
     m_colors.resize(m_width*m_height);
 
     const int paddingamount = ((4-(m_width*3)%4)%4);
-
+    //matriz de colores
     for (int y = 0; y<m_height; y++){
         for (int x = 0; x < m_width; x++) {
             unsigned char color[3];
@@ -72,18 +72,21 @@ void Image::Histograma(const char *path, const char *end){
         f.ignore(paddingamount);
     }
     f.close();
+    //vectores donde guardaremos el numero de ocurrencias
     std::vector<int> r_colors(256);
     std::vector<int> g_colors(256);
     std::vector<int> b_colors(256);
 
     int r,g,b;
+    //recorremos nuestra matriz de colores para rellenar nuestras listas de ocurrencias
     for(int i=0;i<m_width*m_height;++i){
+        //aumentamos en uno el valor de la posicion (de la lista) que coincide con la intensidad del pixel rojo
         r=m_colors[i].r;
         r_colors[r]+=1;
-
+        //aumentamos en uno el valor de la posicion (de la lista) que coincide con la intensidad del pixel verde
         g=m_colors[i].g;
         g_colors[g]+=1;
-
+        //aumentamos en uno el valor de la posicion (de la lista) que coincide con la intensidad del pixel azul
         b=m_colors[i].b;
         b_colors[b]+=1;
     }
