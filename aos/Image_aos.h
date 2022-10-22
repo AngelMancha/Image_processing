@@ -27,7 +27,6 @@ public:
     void Export(const char *path) const;
     void Histograma(const char* path,const char *end);
 
-
 private:
     int m_width; // atributo para definit la altura de la imagen en px
     int m_height; // atributo para definit la altura de la imagen en px

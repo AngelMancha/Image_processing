@@ -5,7 +5,14 @@
 #include <iostream>
 using namespace std;
 int main(){
-    Image prueba(0,0);
-    prueba.Histograma("bmp_24.bmp","prueba.txt");
+    Image copy(0,0);
+    copy.Histograma("bmp_24.bmp","prueba.txt");
+    Image copy2(0,0);
+    copy.Histograma("elephant.bmp","prueba2.txt");
+    Image copy3(0,0);
+    copy.Histograma("landscape.bmp","prueba3.txt");
+    Image copy4(0,0);
+    copy.Histograma("gr.bmp","prueba4.txt");
+
 }
 //
