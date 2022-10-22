@@ -11,6 +11,8 @@ Alejandro Pardo
 #include <iostream>
 #include "Image_aos.h"
 #include <math.h>
+#include <iterator>
+
 using namespace std;
 
 
@@ -38,7 +40,61 @@ bool Image::Copy(const char *SRC, const char* DEST) {
     return src && dest;
 }
 
+void Image::Histograma(const char *path, const char *end){
+    std::ifstream f;
+    f.open(path, ios::in | ios::binary);
 
+    unsigned char fileheader[fileheadersize];
+    f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
+
+    unsigned char informationheader[informationheadersize];
+    f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
+
+    m_width = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
+    m_height = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
+    m_colors.resize(m_width*m_height);
+
+    const int paddingamount = ((4-(m_width*3)%4)%4);
+
+    vector<float> rojos;
+    vector<float> verdes;
+    vector<float> azules;
+
+    for (int y = 0; y<m_height; y++){
+        for (int x = 0; x < m_width; x++) {
+            unsigned char color[3];
+            f.read(reinterpret_cast<char *>(color), 3);
+
+            auto rojo = static_cast<float>(color[2]);
+            rojos.push_back(rojo);
+            auto verde = static_cast<float>(color[1]);
+            verdes.push_back(verde);
+            auto azul = static_cast<float>(color[0]);
+            azules.push_back(azul);
+
+        }
+        f.ignore(paddingamount);
+    }
+    f.close();
+    vector<int> histograma_r;
+    vector<int> histograma_g;
+    vector<int> histograma_b;
+    vector<int> histograma;
+    for(int i =0; i<256; i++){
+
+        histograma_r.push_back(count(rojos.begin(), rojos.end(), i));
+        histograma_g.push_back(count(verdes.begin(), verdes.end(), i));
+        histograma_b.push_back(count(azules.begin(), azules.end(), i));
+    }
+    histograma.reserve( histograma_r.size() + histograma_g.size()  + histograma_b.size()); // preallocate memory
+    histograma.insert( histograma.end(), histograma_r.begin(), histograma_r.end());
+    histograma.insert( histograma.end(), histograma_g.begin(), histograma_g.end());
+    histograma.insert( histograma.end(), histograma_b.begin(), histograma_b.end());
+    std::ofstream output_file(end);
+    std::ostream_iterator<int> output_iterator(output_file, "\n");
+    std::copy(histograma.begin(),histograma.end(),output_iterator);
+
+}
 void Image::GrayScale(const char* SRC, const char* DST) {
     /*we open the input and output files*/
     std::ifstream f;
@@ -187,7 +243,7 @@ void Image::checkInformationHeader(ifstream &f, const unsigned char *information
        informationheader[17] != 0 || // valor compresión == 0
        informationheader[18] != 0 || // valor compresión == 0
        informationheader[19] != 0){
-        cerr << "El archivo no es de tipo BMP " << endl;
+        cerr << "El formato BMP no es válido " << endl;
         f.close();
     }
 }
@@ -352,3 +408,4 @@ void Image::Export2(ofstream &j, unsigned char *fileheader, unsigned char *infor
 
     j.close();
 }
+

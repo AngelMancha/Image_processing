@@ -5,10 +5,7 @@
 #include <iostream>
 using namespace std;
 int main(){
-    cout << "hola" << endl;
-    Image copia(0,0);
-    copia.GrayScale("elephant.bmp", "prueba3.bmp");
-    cout << "hola" << endl;
-    return 0;
+    Image prueba(0,0);
+    prueba.Histograma("bmp_24.bmp","prueba.txt");
 }
 //
