@@ -24,7 +24,9 @@ public:
 
     bool Copy(const char *SRC, const char* DEST);
     void GrayScale(const char* SRC, const char* DST);
+    void GaussianBlur(const char* SRC, const char* DST);
     void Export(const char *path) const;
+    void Export2(std::ofstream &j, unsigned char *fileheader, unsigned char *informationheader, int paddingamount, int filesize) const;
     void Histograma(const char* path,const char *end);
 
 private:
@@ -37,9 +39,6 @@ private:
     void Read(const char* path);
     static void checkHeader(std::ifstream &f, const unsigned char *fileheader) ;
     static void checkInformationHeader(std::ifstream &f, const unsigned char *informationheader) ;
-    void readColor(std::ifstream &f, int paddingamount);
-    [[nodiscard]] Color GetColor(int x, int y) const;
-
-    void Export2(std::ofstream &j, unsigned char *fileheader, unsigned char *informationheader, int paddingamount,
-                 int filesize) const;
+    void readColor(std::ifstream &f, int paddingamount);[[nodiscard]] Color GetColor(int x, int y) const;
+    void Grey_calculations(std::ifstream &f, const int paddingamount);
 };
