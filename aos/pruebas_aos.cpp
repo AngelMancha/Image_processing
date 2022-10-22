@@ -6,6 +6,6 @@
 using namespace std;
 int main(){
     Image prueba(0,0);
-    prueba.Histograma("bmp_24.bmp","prueba.txt");
+    prueba.GrayScale("elephant.bmp","prueba.bmp");
 }
 //
