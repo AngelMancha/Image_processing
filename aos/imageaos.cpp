@@ -12,7 +12,7 @@ Alejandro Pardo
 #include "Image_aos.h"
 #include <math.h>
 #include <iterator>
-
+#include <vector>
 using namespace std;
 
 
@@ -190,6 +190,14 @@ void Image::GaussianBlur(const char* SRC, const char* DST) {
 
     f.read(reinterpret_cast<char *>(fileheader), fileheadersize);
     f.read(reinterpret_cast<char *>(informationheader), informationheadersize);
+    std::vector<Color>color_aux; // definimos un vector auxiliar de colores donde vamos a aplicar las operaciones
+    for (unsigned long long i=0; i < m_colors.size(); i++) {
+        color_aux.push_back(m_colors[i]);
+       /* int x = int(i);
+        cout << "color of the OLD vector is" << m_colors[x].r << endl;
+        cout << "color red of the new vector is " << color_aux[x].r << endl; */
+    }
+
 
     int mascara[5][5] = {{1,4,7,4,1},
                          {4,16,26,16,4},
@@ -200,8 +208,6 @@ void Image::GaussianBlur(const char* SRC, const char* DST) {
 
     for (int y =0; y < m_height; y++) {
         for (int pyxel = 0; pyxel < m_width; pyxel++) {
-
-
             float final_cr;
             float final_cg;
             float final_cb;
@@ -209,11 +215,11 @@ void Image::GaussianBlur(const char* SRC, const char* DST) {
             for (int sumatorio_s = -2; sumatorio_s < 3; sumatorio_s++) {
                 for (int sumatorio_t=-2; sumatorio_t < 3; sumatorio_t++) {
 
-                   cout << "Estamos en y= " << y << "y x igual a " << pyxel <<"Estamos en sumatorio_t = "
-                    << sumatorio_t << "y sumatorio_s = " << sumatorio_s <<endl;
+                  /* cout << "Estamos en y= " << y << "y x igual a " << pyxel <<"Estamos en sumatorio_t = "
+                    << sumatorio_t << "y sumatorio_s = " << sumatorio_s <<endl;*/
                     /*Controlamos que el pyxel no esté fuera de los límites de la imagen.
                      * De ser así, asignamos 0 a las variables de los colores*/
-                    if ((pyxel + sumatorio_s > m_width) or (pyxel + sumatorio_s < m_width) or (y + sumatorio_t > m_height) or (y + sumatorio_t < m_height)) {
+                    if ((pyxel + sumatorio_s > m_width) or (pyxel + sumatorio_s < 0) or (y + sumatorio_t > m_height) or (y + sumatorio_t < 0)) {
 
                         final_cr = final_cr + 0;
                         final_cg = final_cg + 0;
@@ -229,6 +235,7 @@ void Image::GaussianBlur(const char* SRC, const char* DST) {
 
 
                         /*Calculamos el color para uno de los 25 pixeles que está alrededor del pyxel (x,y) */
+                        //cout << "valor de la mascara es" << mascara[sumatorio_s + 2][sumatorio_t + 2] << endl;
                         float cr = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  nr;
                         float cg = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  ng;
                         float cb = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  nb;
@@ -237,7 +244,9 @@ void Image::GaussianBlur(const char* SRC, const char* DST) {
                         final_cr = final_cr + cr;
                         final_cg = final_cg + cg;
                         final_cb = final_cb + cb;
-
+                        /*cout << "The final color of red is: " << final_cr << endl;
+                        cout << "The final color of green is: " << final_cg << endl;
+                        cout << "The final color of blue is: " << final_cb << endl;*/
                     }
 
                 } /*loop sumatorio_t*/
