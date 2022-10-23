@@ -171,6 +171,96 @@ void Image::Grey_calculations(ifstream &f, const int paddingamount) {
         f.ignore(paddingamount);}}
 
 
+
+void Image::GaussianBlur(const char* SRC, const char* DST) {
+    std::ifstream f;
+    openFilein(SRC, f);
+
+    std::ofstream j;
+    openFileout(DST, j);
+
+    /*Leemos el archivo para así obtener el ancho, alto y el vector de colores*/
+    Image::Read(SRC);
+
+    unsigned char fileheader[fileheadersize];
+    unsigned char informationheader[informationheadersize];
+    const int paddingamount = ((4 - (m_width * 3) % 4) % 4);
+    const int filesize = fileheadersize + informationheadersize + m_width * m_height * 3 + paddingamount * m_height;
+
+
+    f.read(reinterpret_cast<char *>(fileheader), fileheadersize);
+    f.read(reinterpret_cast<char *>(informationheader), informationheadersize);
+
+    int mascara[5][5] = {{1,4,7,4,1},
+                         {4,16,26,16,4},
+                         {7,26,41,26,7},
+                         {4,16,26,16,4},
+                         {1,4,7,4,1}};
+
+
+    for (int y =682; y < m_height; y++) {
+        for (int pyxel = 0; pyxel < m_width; pyxel++) {
+
+
+            float final_cr;
+            float final_cg;
+            float final_cb;
+
+            for (int sumatorio_s = -2; sumatorio_s < 3; sumatorio_s++) {
+                for (int sumatorio_t=-2; sumatorio_t < 3; sumatorio_t++) {
+
+                   cout << "Estamos en y= " << y << "y x igual a " << pyxel <<"Estamos en sumatorio_t = "
+                    << sumatorio_t << "y sumatorio_s = " << sumatorio_s <<endl;
+                    /*Controlamos que el pyxel no esté fuera de los límites de la imagen.
+                     * De ser así, asignamos 0 a las variables de los colores*/
+                    if ((pyxel + sumatorio_s > m_width) or (pyxel + sumatorio_s < m_width) or (y + sumatorio_t > m_height) or (y + sumatorio_t < m_height)) {
+
+                        final_cr = final_cr + 0;
+                        final_cg = final_cg + 0;
+                        final_cb = final_cb + 0;
+                    }
+                        /*cogemos el color del pyxel que está en la posición x = pyxel + sumatorio_s y la posición y = y + sumatorio_t)*/
+                    else {
+
+                        float nr = m_colors[((y + sumatorio_t) * m_width) + pyxel+sumatorio_s].r;
+                        float ng = m_colors[((y + sumatorio_t) * m_width) + pyxel+sumatorio_s].g;
+                        float nb = m_colors[((y + sumatorio_t) * m_width) + pyxel+sumatorio_s].b;
+
+
+                        /*Calculamos el color para uno de los 25 pixeles que está alrededor del pyxel (x,y) */
+                        float cr = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  nr;
+                        float cg = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  ng;
+                        float cb = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  nb;
+
+                        /*le sumamos a la variable que va a recopilar la suma de todos los colores de los 25 pyxeles*/
+                        final_cr = final_cr + cr;
+                        final_cg = final_cg + cg;
+                        final_cb = final_cb + cb;
+
+                    }
+
+                } /*loop sumatorio_t*/
+            }/*sumatorio_s*/
+
+            /*metemos los colores finales en el vector m_colors*/
+            m_colors[y*m_width+pyxel].r = final_cr;
+            m_colors[y*m_width+pyxel].g = final_cg;
+            m_colors[y*m_width+pyxel].b = final_cb;
+
+
+        }
+        f.ignore(paddingamount);
+    }
+    f.close();
+    /*Exportamos el archivo al fichero de salida*/
+    Export2(j, fileheader, informationheader, paddingamount, filesize);
+
+
+    cout << "El fichero ha convertido a difusión gausiana" << endl;
+}
+
+
+
 /* Funciones privadas*/
 
 void Image::Read(const char *path) {
