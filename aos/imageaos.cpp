@@ -198,7 +198,7 @@ void Image::GaussianBlur(const char* SRC, const char* DST) {
                          {1,4,7,4,1}};
 
 
-    for (int y =682; y < m_height; y++) {
+    for (int y =0; y < m_height; y++) {
         for (int pyxel = 0; pyxel < m_width; pyxel++) {
 
 
@@ -218,13 +218,14 @@ void Image::GaussianBlur(const char* SRC, const char* DST) {
                         final_cr = final_cr + 0;
                         final_cg = final_cg + 0;
                         final_cb = final_cb + 0;
+
                     }
                         /*cogemos el color del pyxel que está en la posición x = pyxel + sumatorio_s y la posición y = y + sumatorio_t)*/
                     else {
 
-                        float nr = m_colors[((y + sumatorio_t) * m_width) + pyxel+sumatorio_s].r;
-                        float ng = m_colors[((y + sumatorio_t) * m_width) + pyxel+sumatorio_s].g;
-                        float nb = m_colors[((y + sumatorio_t) * m_width) + pyxel+sumatorio_s].b;
+                        float nr = (color_aux[((y + sumatorio_t) * m_width) + pyxel+sumatorio_s].r);
+                        float ng = (color_aux[((y + sumatorio_t) * m_width) + pyxel+sumatorio_s].g);
+                        float nb = (color_aux[((y + sumatorio_t) * m_width) + pyxel+sumatorio_s].b);
 
 
                         /*Calculamos el color para uno de los 25 pixeles que está alrededor del pyxel (x,y) */
@@ -243,11 +244,11 @@ void Image::GaussianBlur(const char* SRC, const char* DST) {
             }/*sumatorio_s*/
 
             /*metemos los colores finales en el vector m_colors*/
-            m_colors[y*m_width+pyxel].r = final_cr;
-            m_colors[y*m_width+pyxel].g = final_cg;
-            m_colors[y*m_width+pyxel].b = final_cb;
 
-
+            //cout << "The color is blabalabkansaonsiabd" <<final_cr << endl;
+            m_colors[y*m_width+pyxel].r = final_cr/273; // normalizamos
+            m_colors[y*m_width+pyxel].g = final_cg/273;
+            m_colors[y*m_width+pyxel].b = final_cb/273;
         }
         f.ignore(paddingamount);
     }
