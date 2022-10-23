@@ -6,7 +6,7 @@
 using namespace std;
 int main(){
     Image copy(0,0);
-    copy.GaussianBlur("elephant.bmp","prueba.bmp");
+    copy.GrayScale("landscape.bmp","prueba.bmp");
 
 
 }

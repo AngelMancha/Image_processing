@@ -117,9 +117,12 @@ void Image::GrayScale(const char* SRC, const char* DST) {
     unsigned char informationheader[informationheadersize];
     const int paddingamount = ((4-(m_width*3)%4)%4);
     const int filesize = fileheadersize + informationheadersize + m_width * m_height * 3 + paddingamount * m_height;
+
+
     f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
-
+    int offset = fileheader[10] + (fileheader[11]<<8) + (fileheader[12]<<16) + (fileheader[13]<<24);
+    f.seekg(offset,std::ios_base ::beg);
     /*Procedemos a realizar los cálculos pertinentes para la conversion a escala de grises*/
     Grey_calculations(f, paddingamount);
     f.close();
@@ -190,6 +193,7 @@ void Image::GaussianBlur(const char* SRC, const char* DST) {
 
     f.read(reinterpret_cast<char *>(fileheader), fileheadersize);
     f.read(reinterpret_cast<char *>(informationheader), informationheadersize);
+
     std::vector<Color>color_aux; // definimos un vector auxiliar de colores donde vamos a aplicar las operaciones
     for (unsigned long long i=0; i < m_colors.size(); i++) {
         color_aux.push_back(m_colors[i]);
@@ -287,7 +291,8 @@ void Image::Read(const char *path) {
     checkHeader(f, fileheader); // Comprobamos que la cabecera sea correcta llamando a la funcion checkHeader
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
     checkInformationHeader(f, informationheader);  // Restricción para que el fichero pueda ser válido
-
+    int offset = fileheader[10] + (fileheader[11]<<8) + (fileheader[12]<<16) + (fileheader[13]<<24);
+    f.seekg(offset,std::ios_base ::beg);
     //Anchura en px de la imagen (Comprende desde el byte 18-21)
     m_width = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
     //Altura en px de la imagen (Comprende desde el byte 22-25)
