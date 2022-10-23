@@ -212,9 +212,9 @@ void Image::GaussianBlur(const char* SRC, const char* DST) {
 
     for (int y =0; y < m_height; y++) {
         for (int pyxel = 0; pyxel < m_width; pyxel++) {
-            float final_cr;
-            float final_cg;
-            float final_cb;
+            float final_cr = 0;
+            float final_cg = 0;
+            float final_cb = 0;
 
             for (int sumatorio_s = -2; sumatorio_s < 3; sumatorio_s++) {
                 for (int sumatorio_t=-2; sumatorio_t < 3; sumatorio_t++) {
