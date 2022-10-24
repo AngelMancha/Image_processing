@@ -45,4 +45,16 @@ private:
     void Gauss_calculations(std::ifstream &f, const int paddingamount, const std::vector<Color> &color_aux);
 
     std::vector<Color> get_Color_vector();
+
+    void
+    open_create_gauss_files(std::filesystem::path &SRC, const std::filesystem::path &DST, std::ifstream &f,
+                            std::ofstream &j) const;
+
+    void pixeles_alrededor(const std::vector<Color> &color_aux, int y, int pyxel, float &final_cr, float &final_cg,
+                           float &final_cb) const;
+
+    void
+    gauss_formula(const std::vector<Color> &color_aux, int y, int pyxel, int sumatorio_s, int sumatorio_t,
+                  float &final_cr,
+                  float &final_cg, float &final_cb) const;
 };

@@ -187,13 +187,8 @@ void Image::Grey_calculations(ifstream &f, const int paddingamount) {
 void Image::GaussianBlur(std::filesystem::path SRC, std::filesystem::path DST) {
     /*abrimos los ficheros de entrada y salida*/
     std::ifstream f;
-    openFilein(SRC, f);
     std::ofstream j;
-
-    /*metnemos el nombre con el que queremos que se guarde el fichero de salida en el directorio destino*/
-    std::string new_name="gauss_"+(SRC.filename()).string();
-    auto target = DST/new_name;
-    openFileout(target, j);
+    open_create_gauss_files(SRC, DST, f, j);
 
     /*Leemos el archivo para así obtener el ancho, alto y el vector de colores*/
     Image::Read(SRC);
@@ -210,10 +205,16 @@ void Image::GaussianBlur(std::filesystem::path SRC, std::filesystem::path DST) {
     /*Llamamos a la función que se encarga de realizar las operaciones para difuminar el archivo*/
     Gauss_calculations(f, paddingamount, color_aux);
     f.close();
-
     /*Exportamos el archivo al fichero de salida*/
     Export2(j, fileheader, informationheader, paddingamount, filesize);
     cout << "El fichero ha convertido a difusión gausiana" << endl;
+}
+
+void Image::open_create_gauss_files(filesystem::path &SRC, const filesystem::path &DST, ifstream &f, ofstream &j) const {
+    openFilein(SRC, f);/*Escribimos el nombre con el que queremos que se guarde el fichero de salida en el directorio destino*/
+    string new_name="gauss_"+(SRC.filename()).string();
+    auto target = DST/new_name;
+    openFileout(target, j);
 }
 
 vector<Color> Image::get_Color_vector() {
@@ -225,53 +226,65 @@ vector<Color> Image::get_Color_vector() {
 }
 
 void Image::Gauss_calculations(ifstream &f, const int paddingamount, const vector<Color> &color_aux) {
-    int mascara[5][5] = {{1, 4,  7,  4,  1},
-                         {4, 16, 26, 16, 4},
-                         {7, 26, 41, 26, 7},
-                         {4, 16, 26, 16, 4},
-                         {1, 4,  7,  4,  1}};
-
 
     for (int y =0; y < m_height; y++) {
         for (int pyxel = 0; pyxel < m_width; pyxel++) {
             float final_cr = 0;
             float final_cg = 0;
             float final_cb = 0;
+            /*Para cada pixel obtenemos la suma de las operaciones realizadas en los 25
+             * pixeles de alrededor al pyxel actual ( pyxel , y )*/
+            pixeles_alrededor(color_aux, y, pyxel, final_cr, final_cg, final_cb);
 
-            for (int sumatorio_s = -2; sumatorio_s < 3; sumatorio_s++) {
-                for (int sumatorio_t=-2; sumatorio_t < 3; sumatorio_t++) {
-                    /*Controlamos que el pyxel no esté fuera de los límites de la imagen.
-                     * De ser así, asignamos 0 a las variables de los colores*/
-                    if ((pyxel + sumatorio_s > m_width) or (pyxel + sumatorio_s < 0) or (y + sumatorio_t > m_height) or (y + sumatorio_t < 0)) {
-                        final_cr = final_cr + 0;
-                        final_cg = final_cg + 0;
-                        final_cb = final_cb + 0;
-                    }
-                        /*cogemos el color del pyxel que está en la posición x = pyxel + sumatorio_s y la posición y = y + sumatorio_t)*/
-                    else {
-                        float nr = (color_aux[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s].r);
-                        float ng = (color_aux[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s].g);
-                        float nb = (color_aux[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s].b);
-
-                        /*Calculamos el color para uno de los 25 pixeles que está alrededor del pyxel (x,y) */
-                        float cr = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  nr;
-                        float cg = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  ng;
-                        float cb = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  nb;
-
-                        /*le sumamos a la variable que va a recopilar la suma de todos los colores de los 25 pyxeles*/
-                        final_cr = final_cr + cr;
-                        final_cg = final_cg + cg;
-                        final_cb = final_cb + cb;
-                    }
-                }
-            }
-            /*metemos los colores finales en el vector m_colors*/
-            m_colors[y * m_width + pyxel].r = final_cr / 273; // normalizamos
+            /*metemos los colores finales en el vector m_colors y normalizamos*/
+            m_colors[y * m_width + pyxel].r = final_cr / 273;
             m_colors[y * m_width + pyxel].g = final_cg / 273;
             m_colors[y * m_width + pyxel].b = final_cb / 273;
         }
         f.ignore(paddingamount);
     }
+}
+
+void Image::pixeles_alrededor(const vector<Color> &color_aux, int y, int pyxel, float &final_cr, float &final_cg, float &final_cb) const {
+
+    for (int sumatorio_s = -2; sumatorio_s < 3; sumatorio_s++) {
+        for (int sumatorio_t=-2; sumatorio_t < 3; sumatorio_t++) {
+
+            /*Controlamos que el pyxel no esté fuera de los límites de la imagen.
+             * De ser así, asignamos 0 a las variables de los colores*/
+            if ((pyxel + sumatorio_s > m_width) or (pyxel + sumatorio_s < 0) or (y + sumatorio_t > m_height) or (y + sumatorio_t < 0)) {
+                final_cr = final_cr + 0;
+                final_cg = final_cg + 0;
+                final_cb = final_cb + 0;
+            }
+                /*cogemos el color del pyxel que está en la posición x = pyxel + sumatorio_s y la posición y = y + sumatorio_t)*/
+            else {
+                gauss_formula(color_aux, y, pyxel, sumatorio_s, sumatorio_t, final_cr, final_cg, final_cb);
+
+            }
+        }
+    }
+}
+
+void Image::gauss_formula(const vector<Color> &color_aux, int y, int pyxel, int sumatorio_s, int sumatorio_t, float &final_cr, float &final_cg, float &final_cb) const {
+    /*Esta función se encarga de calcular el valor para los 25 pixeles alrededor del pyxel central que están
+     * dentro de los límites de la imagen*/
+
+    int mascara[5][5] = {{1, 4,  7,  4,  1},{4, 16, 26, 16, 4},{7, 26, 41, 26, 7},{4, 16, 26, 16, 4},{1, 4,  7,  4,  1}};
+
+    float nr = (color_aux[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s].r);
+    float ng = (color_aux[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s].g);
+    float nb = (color_aux[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s].b);
+
+    /*Calculamos el color para uno de los 25 pixeles que está alrededor del pyxel (x,y) */
+    float cr = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  nr;
+    float cg = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  ng;
+    float cb = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  nb;
+
+    /*le sumamos a la variable que va a recopilar la suma de todos los colores de los 25 pyxeles*/
+    final_cr = final_cr + cr;
+    final_cg = final_cg + cg;
+    final_cb = final_cb + cb;
 }
 
 
