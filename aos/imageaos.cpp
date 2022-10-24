@@ -11,7 +11,7 @@ Alejandro Pardo
 
 #include <iostream>
 #include "Image_aos.h"
-#include <math.h>
+#include <cmath>
 #include <iterator>
 #include <vector>
 #include <filesystem>
@@ -304,10 +304,8 @@ void Image::Gauss_formula(const vector<Color> &color_aux, int y, int pyxel, int 
 void Image::Read(std::filesystem::path path) {
     /* Esta función lee una imagen y comprueba que todos los campos de la cabecera sean correctos y guarda en la clase
      * ImageSoa los valores para m_width, m_height y m_colors */
-
     std::ifstream f;
     openFilein(path, f);
-
     // Definimos 2 arrays que contienen la cabecera y la información de cabecera y hacemos comprobaciones
     unsigned char fileheader[fileheadersize]; //desde el byte 0 hasta el 14 --> Contiene el byte hasta el tamaño de cabecera de BMP
     unsigned char informationheader[informationheadersize];
