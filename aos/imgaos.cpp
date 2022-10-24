@@ -31,13 +31,13 @@ int funcion(std::vector<std::filesystem::path> paths, std::filesystem::path outp
         }
 
         if(operation=="histo"){
-            Image mono(0, 0);
-            mono.Histograma(path, outpath);
+            Image histo(0, 0);
+            histo.Histograma(path, outpath);
         }
 
         if(operation=="gauss"){
-            Image mono(0, 0);
-            mono.GaussianBlur(path, outpath);
+            Image gauss(0, 0);
+            gauss.GaussianBlur(path, outpath);
         }
 
 
