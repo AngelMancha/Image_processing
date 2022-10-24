@@ -23,7 +23,7 @@ public:
     ~Image();// destructor
 
 
-    bool Copy(std::filesystem::path SRC, std::filesystem::path DEST);
+    void Copy(std::filesystem::path SRC, std::filesystem::path DEST);
     void GrayScale(const char* SRC, const char* DST);
     void GaussianBlur(const char* SRC, const char* DST);
     void Export(const char *path) const;

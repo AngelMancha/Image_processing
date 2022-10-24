@@ -32,14 +32,21 @@ Image::~Image() = default;
 
 /* Funciones públicas */
 
-bool Image::Copy(std::filesystem::path SRC, std::filesystem::path DEST) {
+void Image::Copy(std::filesystem::path SRC, std::filesystem::path DEST) {
     /* Esta función coge*/
     Image::Read(SRC);
     std::ifstream src(SRC, std::ios::binary);
     std::ofstream dest(DEST, std::ios::binary);
-    dest << src.rdbuf();
-    cout << "El fichero ha sido copiado con exito"<<endl;
-    return src && dest;
+    auto target = DEST/SRC.filename();
+    try // If you want to avoid exception handling, then use the error code overload of the following functions.
+    {
+        std::filesystem::create_directories(DEST); // Recursively create target directory if not existing.
+        std::filesystem::copy_file(SRC, target, std::filesystem::copy_options::overwrite_existing);
+    }
+    catch (std::exception& e) // Not using fs::filesystem_error since std::bad_alloc can throw too.
+    {
+        std::cout << e.what();
+    }
 }
 
 void Image::Histograma(const char *path, const char *end){
