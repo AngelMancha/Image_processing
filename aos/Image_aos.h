@@ -41,4 +41,8 @@ private:
     static void checkInformationHeader(std::ifstream &f, const unsigned char *informationheader) ;
     void readColor(std::ifstream &f, int paddingamount);[[nodiscard]] Color GetColor(int x, int y) const;
     void Grey_calculations(std::ifstream &f, const int paddingamount);
+
+    void Gauss_calculations(std::ifstream &f, const int paddingamount, const std::vector<Color> &color_aux);
+
+    std::vector<Color> get_Color_vector();
 };

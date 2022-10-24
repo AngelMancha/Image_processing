@@ -185,40 +185,51 @@ void Image::Grey_calculations(ifstream &f, const int paddingamount) {
 
 
 void Image::GaussianBlur(std::filesystem::path SRC, std::filesystem::path DST) {
+    /*abrimos los ficheros de entrada y salida*/
     std::ifstream f;
     openFilein(SRC, f);
-
     std::ofstream j;
+
+    /*metnemos el nombre con el que queremos que se guarde el fichero de salida en el directorio destino*/
     std::string new_name="gauss_"+(SRC.filename()).string();
     auto target = DST/new_name;
     openFileout(target, j);
 
     /*Leemos el archivo para así obtener el ancho, alto y el vector de colores*/
     Image::Read(SRC);
-
     unsigned char fileheader[fileheadersize];
     unsigned char informationheader[informationheadersize];
     const int paddingamount = ((4 - (m_width * 3) % 4) % 4);
     const int filesize = fileheadersize + informationheadersize + m_width * m_height * 3 + paddingamount * m_height;
-
-
     f.read(reinterpret_cast<char *>(fileheader), fileheadersize);
     f.read(reinterpret_cast<char *>(informationheader), informationheadersize);
 
-    std::vector<Color>color_aux; // definimos un vector auxiliar de colores donde vamos a aplicar las operaciones
+    /*definimos un vector auxiliar de colores donde vamos a aplicar las operaciones*/
+    vector<Color> color_aux = get_Color_vector();
+
+    /*Llamamos a la función que se encarga de realizar las operaciones para difuminar el archivo*/
+    Gauss_calculations(f, paddingamount, color_aux);
+    f.close();
+
+    /*Exportamos el archivo al fichero de salida*/
+    Export2(j, fileheader, informationheader, paddingamount, filesize);
+    cout << "El fichero ha convertido a difusión gausiana" << endl;
+}
+
+vector<Color> Image::get_Color_vector() {
+    vector<Color>color_aux;
     for (unsigned long long i=0; i < m_colors.size(); i++) {
         color_aux.push_back(m_colors[i]);
-       /* int x = int(i);
-        cout << "color of the OLD vector is" << m_colors[x].r << endl;
-        cout << "color red of the new vector is " << color_aux[x].r << endl; */
     }
+    return color_aux;
+}
 
-
-    int mascara[5][5] = {{1,4,7,4,1},
-                         {4,16,26,16,4},
-                         {7,26,41,26,7},
-                         {4,16,26,16,4},
-                         {1,4,7,4,1}};
+void Image::Gauss_calculations(ifstream &f, const int paddingamount, const vector<Color> &color_aux) {
+    int mascara[5][5] = {{1, 4,  7,  4,  1},
+                         {4, 16, 26, 16, 4},
+                         {7, 26, 41, 26, 7},
+                         {4, 16, 26, 16, 4},
+                         {1, 4,  7,  4,  1}};
 
 
     for (int y =0; y < m_height; y++) {
@@ -229,28 +240,20 @@ void Image::GaussianBlur(std::filesystem::path SRC, std::filesystem::path DST) {
 
             for (int sumatorio_s = -2; sumatorio_s < 3; sumatorio_s++) {
                 for (int sumatorio_t=-2; sumatorio_t < 3; sumatorio_t++) {
-
-                  /* cout << "Estamos en y= " << y << "y x igual a " << pyxel <<"Estamos en sumatorio_t = "
-                    << sumatorio_t << "y sumatorio_s = " << sumatorio_s <<endl;*/
                     /*Controlamos que el pyxel no esté fuera de los límites de la imagen.
                      * De ser así, asignamos 0 a las variables de los colores*/
                     if ((pyxel + sumatorio_s > m_width) or (pyxel + sumatorio_s < 0) or (y + sumatorio_t > m_height) or (y + sumatorio_t < 0)) {
-
                         final_cr = final_cr + 0;
                         final_cg = final_cg + 0;
                         final_cb = final_cb + 0;
-
                     }
                         /*cogemos el color del pyxel que está en la posición x = pyxel + sumatorio_s y la posición y = y + sumatorio_t)*/
                     else {
-
-                        float nr = (color_aux[((y + sumatorio_t) * m_width) + pyxel+sumatorio_s].r);
-                        float ng = (color_aux[((y + sumatorio_t) * m_width) + pyxel+sumatorio_s].g);
-                        float nb = (color_aux[((y + sumatorio_t) * m_width) + pyxel+sumatorio_s].b);
-
+                        float nr = (color_aux[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s].r);
+                        float ng = (color_aux[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s].g);
+                        float nb = (color_aux[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s].b);
 
                         /*Calculamos el color para uno de los 25 pixeles que está alrededor del pyxel (x,y) */
-                        //cout << "valor de la mascara es" << mascara[sumatorio_s + 2][sumatorio_t + 2] << endl;
                         float cr = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  nr;
                         float cg = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  ng;
                         float cb = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  nb;
@@ -259,31 +262,17 @@ void Image::GaussianBlur(std::filesystem::path SRC, std::filesystem::path DST) {
                         final_cr = final_cr + cr;
                         final_cg = final_cg + cg;
                         final_cb = final_cb + cb;
-                        /*cout << "The final color of red is: " << final_cr << endl;
-                        cout << "The final color of green is: " << final_cg << endl;
-                        cout << "The final color of blue is: " << final_cb << endl;*/
                     }
-
-                } /*loop sumatorio_t*/
-            }/*sumatorio_s*/
-
+                }
+            }
             /*metemos los colores finales en el vector m_colors*/
-
-            //cout << "The color is blabalabkansaonsiabd" <<final_cr << endl;
-            m_colors[y*m_width+pyxel].r = final_cr/273; // normalizamos
-            m_colors[y*m_width+pyxel].g = final_cg/273;
-            m_colors[y*m_width+pyxel].b = final_cb/273;
+            m_colors[y * m_width + pyxel].r = final_cr / 273; // normalizamos
+            m_colors[y * m_width + pyxel].g = final_cg / 273;
+            m_colors[y * m_width + pyxel].b = final_cb / 273;
         }
         f.ignore(paddingamount);
     }
-    f.close();
-    /*Exportamos el archivo al fichero de salida*/
-    Export2(j, fileheader, informationheader, paddingamount, filesize);
-
-
-    cout << "El fichero ha convertido a difusión gausiana" << endl;
 }
-
 
 
 /* Funciones privadas*/
