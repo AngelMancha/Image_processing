@@ -3,6 +3,10 @@
 //
 #include "Image_aos.h"
 #include <iostream>
+#include <filesystem>
+#include <iostream>
+#include <vector>
+#include <filesystem>
 using namespace std;
 int main(){
     Image copy(0,0);

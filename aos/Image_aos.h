@@ -3,6 +3,7 @@
 //
 #include <vector>
 #include <fstream>
+#include <filesystem>
 
 #ifndef ARCOS_PROYECTO1_IMAGE_AOS_H
 #define ARCOS_PROYECTO1_IMAGE_H

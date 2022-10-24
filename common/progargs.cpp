@@ -2,6 +2,7 @@
 #include <cstring>
 #include <dirent.h>
 #include "../soa/Image_soa.h"
+#include "../aos/Image_aos.h"
 
 using namespace std;
 
@@ -31,6 +32,3 @@ void tiempo_ejecucion(float tload, float tstore, float top, DIR *dirin, DIR *dir
     cout << op<<" time: "<<top<<"\nStore time: "<<tstore<<"\n";
 }
 
-int main(){
-
-};

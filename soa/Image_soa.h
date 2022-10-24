@@ -20,10 +20,10 @@ struct Colores{
     ~Colores();
 };
 
-class Image{
+class ImageSoa{
 public:
-    Image(int width, int height); // constructor de la clase
-    ~Image();// destructor
+    ImageSoa(int width, int height); // constructor de la clase
+    ~ImageSoa();// destructor
 
 
     bool Copy(const char *SRC, const char* DEST);

@@ -13,6 +13,7 @@ Alejandro Pardo
 #include <math.h>
 #include <iterator>
 #include <vector>
+#include <filesystem>
 using namespace std;
 
 
@@ -275,7 +276,7 @@ void Image::GaussianBlur(const char* SRC, const char* DST) {
 
 void Image::Read(const char *path) {
     /* Esta función lee una imagen y comprueba que todos los campos de la cabecera sean correctos y guarda en la clase
-     * Image los valores para m_width, m_height y m_colors */
+     * ImageSoa los valores para m_width, m_height y m_colors */
 
     std::ifstream f;
     openFilein(path, f);
@@ -367,7 +368,7 @@ Color Image::GetColor(int x, int y) const {
 
 
 void Image::Export2(ofstream &j, unsigned char *fileheader, unsigned char *informationheader, const int paddingamount,
-                    const int filesize) const {
+                       const int filesize) const {
 
     unsigned char bmpPad[3] = {0, 0, 0};
     fileheader[2] = filesize;
@@ -392,7 +393,7 @@ void Image::Export2(ofstream &j, unsigned char *fileheader, unsigned char *infor
     j.close();
 }
 
-/*void Image::Export(const char* path) const {
+/*void ImageSoa::Export(const char* path) const {
     std::ofstream f;
     f.open(path, std::ios::out | std::ios::binary);
     if (!f.is_open()) {

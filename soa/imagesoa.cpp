@@ -13,12 +13,12 @@ Colores::Colores(std::vector<int> m_r, std::vector<int> m_g, std::vector<int> m_
 Colores::~Colores()= default;
 
 
-Image::Image(int width, int height): m_width(width), m_height(height) {}
-Image::~Image() = default;
+ImageSoa::ImageSoa(int width, int height): m_width(width), m_height(height) {}
+ImageSoa::~ImageSoa() = default;
 
-void Image::Read(const char *path) {
+void ImageSoa::Read(const char *path) {
     /* Esta función lee una imagen y comprueba que todos los campos de la cabecera sean correctos y guarda en la clase
-     * Image los valores para m_width, m_height y m_colors */
+     * ImageSoa los valores para m_width, m_height y m_colors */
 
     std::ifstream f;
     openFilein(path, f);
@@ -45,7 +45,7 @@ void Image::Read(const char *path) {
 }
 
 
-void Image::readColor(ifstream &f, const int paddingamount) {
+void ImageSoa::readColor(ifstream &f, const int paddingamount) {
     /* Esta función lee el color de cada píxel y lo guarda dentro del array de estructuras definido para los colores
      * (m_colors)*/
     for (int y = 0; y < m_height; y++){
@@ -61,7 +61,7 @@ void Image::readColor(ifstream &f, const int paddingamount) {
 }
 
 
-void Image::checkInformationHeader(ifstream &f, const unsigned char *informationheader) {
+void ImageSoa::checkInformationHeader(ifstream &f, const unsigned char *informationheader) {
     /* Función que comprueba si el archivo es de tipo BMP considerando en número de planos, el tamaño de cada punto
      * y el valor de compresión */
 
@@ -77,7 +77,7 @@ void Image::checkInformationHeader(ifstream &f, const unsigned char *information
 }
 
 
-void Image::checkHeader(ifstream &f, const unsigned char *fileheader) {
+void ImageSoa::checkHeader(ifstream &f, const unsigned char *fileheader) {
     /* Esta función comprueba si el archivo es un BMP, en el caso que no lo sea escribe una salida de error indicando
      * que el archivo adjuntado no es un BMP */
     if(fileheader[0] != 'B' || fileheader[1] != 'M'){
@@ -87,7 +87,7 @@ void Image::checkHeader(ifstream &f, const unsigned char *fileheader) {
 }
 
 
-void Image::openFilein(const char *path, ifstream &f) {
+void ImageSoa::openFilein(const char *path, ifstream &f) {
     /* function to open the image and see if there is an error */
     f.open(path, ios::in | ios::binary);
     if(!f.is_open()){
@@ -96,7 +96,7 @@ void Image::openFilein(const char *path, ifstream &f) {
     }
 }
 
-void Image::openFileout(const char *path, ofstream &f) {
+void ImageSoa::openFileout(const char *path, ofstream &f) {
     /* function to open the image and see if there is an error */
     f.open(path, ios::out | ios::binary);
     if(!f.is_open()){
