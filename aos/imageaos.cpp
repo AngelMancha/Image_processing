@@ -50,14 +50,9 @@ void Image::Copy(std::filesystem::path SRC, std::filesystem::path DEST) {
     }
 }
 
-void Image::Histograma(const char *path, const char *end){
+void Image::Histograma(std::filesystem::path SRC, std::filesystem::path DST){
     std::ifstream f;
-    f.open(path, ios::in | ios::binary);
-    if(!f.is_open()){
-        cout << "El fichero no pudo ser abierto" << endl;
-        exit(-1);
-    }
-
+    openFilein(SRC, f);
     unsigned char fileheader[fileheadersize];
     f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
 
@@ -100,7 +95,9 @@ void Image::Histograma(const char *path, const char *end){
         b=m_colors[i].b;
         b_colors[b]+=1;
     }
-    std::ofstream output_file(end);
+    std::string new_name="histo_"+(SRC.filename().replace_extension(".hst")).string();
+    auto target = DST/new_name;
+    std::ofstream output_file(target);
     for(int x=0;x<256;x++){
         output_file<<r_colors[x]<<endl;
     }
@@ -114,12 +111,14 @@ void Image::Histograma(const char *path, const char *end){
 
 }
 
-void Image::GrayScale(const char* SRC, const char* DST) {
+void Image::GrayScale(std::filesystem::path SRC, std::filesystem::path DST) {
     /*we open the input and output files*/
     std::ifstream f;
     openFilein(SRC, f);
     std::ofstream j;
-    openFileout(DST, j);
+    std::string new_name="mono_"+(SRC.filename()).string();
+    auto target = DST/new_name;
+    openFileout(target, j);
 
     /*Leemos el archivo para así obtener el ancho, alto y el vector de colores*/
     Image::Read(SRC);
@@ -185,12 +184,14 @@ void Image::Grey_calculations(ifstream &f, const int paddingamount) {
 
 
 
-void Image::GaussianBlur(const char* SRC, const char* DST) {
+void Image::GaussianBlur(std::filesystem::path SRC, std::filesystem::path DST) {
     std::ifstream f;
     openFilein(SRC, f);
 
     std::ofstream j;
-    openFileout(DST, j);
+    std::string new_name="gauss_"+(SRC.filename()).string();
+    auto target = DST/new_name;
+    openFileout(target, j);
 
     /*Leemos el archivo para así obtener el ancho, alto y el vector de colores*/
     Image::Read(SRC);

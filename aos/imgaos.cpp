@@ -21,9 +21,25 @@ int funcion(std::vector<std::filesystem::path> paths, std::filesystem::path outp
     for (const auto &path: paths)
     {
         if(operation=="copy"){
-            Image Copy(0, 0);
-            Copy.Copy(path, outpath);
+            Image copia(0, 0);
+            copia.Copy(path, outpath);
         }
+
+        if(operation=="mono"){
+            Image mono(0, 0);
+            mono.GrayScale(path, outpath);
+        }
+
+        if(operation=="histo"){
+            Image mono(0, 0);
+            mono.Histograma(path, outpath);
+        }
+
+        if(operation=="gauss"){
+            Image mono(0, 0);
+            mono.GaussianBlur(path, outpath);
+        }
+
 
     }
     return 0;
@@ -33,7 +49,7 @@ int main(int argc, char *argv[]) {
     //if toda las cosas de errores de si histo y pollas
     std::vector<std::filesystem::path> archivosBMP;
     if(argc!=3){
-        cout<<"puta"<<endl;
+        cout<<"puta lol"<<endl;
     }
     archivosBMP = getImgPaths(argv[1]);
 

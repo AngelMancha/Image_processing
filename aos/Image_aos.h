@@ -24,11 +24,10 @@ public:
 
 
     void Copy(std::filesystem::path SRC, std::filesystem::path DEST);
-    void GrayScale(const char* SRC, const char* DST);
-    void GaussianBlur(const char* SRC, const char* DST);
-    void Export(const char *path) const;
+    void GrayScale(std::filesystem::path SRC, std::filesystem::path DST);
+    void GaussianBlur(std::filesystem::path SRC, std::filesystem::path DST);
     void Export2(std::ofstream &j, unsigned char *fileheader, unsigned char *informationheader, int paddingamount, int filesize) const;
-    void Histograma(const char* path,const char *end);
+    void Histograma(std::filesystem::path SRC,std::filesystem::path DST);
 
 private:
     int m_width; // atributo para definit la altura de la imagen en px
