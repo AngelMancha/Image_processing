@@ -115,7 +115,7 @@ void Image::GrayScale(std::filesystem::path SRC, std::filesystem::path DST) {
     /*we open the input and output files*/
     std::ifstream f;
     std::ofstream j;
-    gray_open_create_files(SRC, DST, f, j);
+    Gray_open_create_files(SRC, DST, f, j);
 
     /*Leemos el archivo para así obtener el ancho, alto y el vector de colores*/
     Image::Read(SRC);
@@ -129,7 +129,7 @@ void Image::GrayScale(std::filesystem::path SRC, std::filesystem::path DST) {
     f.seekg(offset,std::ios_base ::beg);
 
     /*Procedemos a realizar los cálculos pertinentes para la conversion a escala de grises*/
-    Grey_calculations(f, paddingamount);
+    Gray_calculations(f, paddingamount);
     f.close();
 
     /*Exportamos el archivo al fichero de salida*/
@@ -137,14 +137,14 @@ void Image::GrayScale(std::filesystem::path SRC, std::filesystem::path DST) {
     cout << "El fichero ha convertido a escala de grises" << endl;
 }
 
-void Image::gray_open_create_files(filesystem::path &SRC, const filesystem::path &DST, ifstream &f, ofstream &j) const {
+void Image::Gray_open_create_files(filesystem::path &SRC, const filesystem::path &DST, ifstream &f, ofstream &j) const {
     openFilein(SRC, f);
     string new_name= "mono_" + (SRC.filename()).string();
     auto target = DST/new_name;
     openFileout(target, j);
 }
 
-void Image::Grey_calculations(ifstream &f, const int paddingamount) {
+void Image::Gray_calculations(ifstream &f, const int paddingamount) {
     for (int y = 0; y < m_height; y++){
         for (int x = 0; x < m_width; x++) {
             unsigned char color[3];
@@ -270,14 +270,14 @@ void Image::Gauss_pixeles_alrededor(const vector<Color> &color_aux, int y, int p
             }
                 /*cogemos el color del pyxel que está en la posición x = pyxel + sumatorio_s y la posición y = y + sumatorio_t)*/
             else {
-                gauss_formula(color_aux, y, pyxel, sumatorio_s, sumatorio_t, final_cr, final_cg, final_cb);
+                Gauss_formula(color_aux, y, pyxel, sumatorio_s, sumatorio_t, final_cr, final_cg, final_cb);
 
             }
         }
     }
 }
 
-void Image::gauss_formula(const vector<Color> &color_aux, int y, int pyxel, int sumatorio_s, int sumatorio_t, float &final_cr, float &final_cg, float &final_cb) const {
+void Image::Gauss_formula(const vector<Color> &color_aux, int y, int pyxel, int sumatorio_s, int sumatorio_t, float &final_cr, float &final_cg, float &final_cb) const {
     /*Esta función se encarga de calcular el valor para los 25 pixeles alrededor del pyxel central que están
      * dentro de los límites de la imagen*/
 

@@ -34,34 +34,25 @@ private:
     int m_height; // atributo para definit la altura de la imagen en px
     std::vector<Color> m_colors; // vector donde guardamos la ESTRUCTURA de los colores
 
+    /*COMUNES A TODAS LAS FUNCIONES*/
     static void openFilein(std::filesystem::path path, std::basic_ifstream<char> &f) ;
     static void openFileout(std::filesystem::path path, std::basic_ofstream<char> &f) ;
     void Read(std::filesystem::path path);
     static void checkHeader(std::ifstream &f, const unsigned char *fileheader) ;
     static void checkInformationHeader(std::ifstream &f, const unsigned char *informationheader) ;
-    void readColor(std::ifstream &f, int paddingamount);[[nodiscard]] Color GetColor(int x, int y) const;
-    void Grey_calculations(std::ifstream &f, const int paddingamount);
+    void readColor(std::ifstream &f, int paddingamount);
+    [[nodiscard]] Color GetColor(int x, int y) const;
 
-    void Gauss_calculations(std::ifstream &f, const int paddingamount, const std::vector<Color> &color_aux);
-
-    std::vector<Color> get_Color_vector();
-
-    void
-    Gauss_open_create_files(std::filesystem::path &SRC, const std::filesystem::path &DST, std::ifstream &f,
-                            std::ofstream &j) const;
-
-    void Gauss_pixeles_alrededor(const std::vector<Color> &color_aux, int y, int pyxel, float &final_cr, float &final_cg,
-                                 float &final_cb) const;
-
-    void
-    gauss_formula(const std::vector<Color> &color_aux, int y, int pyxel, int sumatorio_s, int sumatorio_t,
-                  float &final_cr,
-                  float &final_cg, float &final_cb) const;
-
-    void gray_open_create_files(std::filesystem::path &SRC, const std::filesystem::path &DST, std::ifstream &f,
-                                std::ofstream &j) const;
-
+    /*GRAY*/
+    void Gray_calculations(std::ifstream &f, const int paddingamount);
+    void Gray_open_create_files(std::filesystem::path &SRC, const std::filesystem::path &DST, std::ifstream &f, std::ofstream &j) const;
     float Gray_formula(float nr, float ng, float nb, float cr, float cg, float cb) const;
-
     void Gray_intensidad_lineal(float nr, float ng, float nb, float &cr, float &cg, float &cb) const;
+
+    /*GAUSS*/
+    void Gauss_calculations(std::ifstream &f, const int paddingamount, const std::vector<Color> &color_aux); std::vector<Color> get_Color_vector();
+    void Gauss_open_create_files(std::filesystem::path &SRC, const std::filesystem::path &DST, std::ifstream &f, std::ofstream &j) const;
+    void Gauss_pixeles_alrededor(const std::vector<Color> &color_aux, int y, int pyxel, float &final_cr, float &final_cg, float &final_cb) const;
+    void Gauss_formula(const std::vector<Color> &color_aux, int y, int pyxel, int sumatorio_s, int sumatorio_t, float &final_cr, float &final_cg, float &final_cb) const;
+
 };

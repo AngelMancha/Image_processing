@@ -12,9 +12,9 @@
 
 
 struct Colores{
-    std::vector<int> m_r;
-    std::vector<int> m_g;
-    std::vector<int> m_b;
+    std::vector<float> m_r;
+    std::vector<float> m_g;
+    std::vector<float> m_b;
     Colores();
     Colores(std::vector<int> m_r,std::vector<int> m_g,std::vector<int> m_b);
     ~Colores();
@@ -37,9 +37,9 @@ private:
     int m_height; // atributo para definit la altura de la imagen en px
     Colores colores; //   ESTRUCTURA DE ARRAYS
 
-    static void openFilein(const char *path, std::basic_ifstream<char> &f) ;
-    static void openFileout(const char *path, std::basic_ofstream<char> &f) ;
-    void Read(const char* path);
+    static void openFilein(std::filesystem::path path, std::basic_ifstream<char> &f);
+    static void openFileout(std::filesystem::path path, std::basic_ofstream<char> &f) ;
+    void Read(std::filesystem::path path);
     static void checkHeader(std::ifstream &f, const unsigned char *fileheader) ;
     static void checkInformationHeader(std::ifstream &f, const unsigned char *informationheader) ;
     void readColor(std::ifstream &f, int paddingamount);

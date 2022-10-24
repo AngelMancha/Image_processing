@@ -52,9 +52,9 @@ void ImageSoa::readColor(ifstream &f, const int paddingamount) {
         for (int x = 0; x < m_width; x++) {
             unsigned char color[3];
             f.read(reinterpret_cast<char*>(color),3);
-            //m_colors[y * m_width + x].r = static_cast<float>(color[2]) / 255.0f;
-            //m_colors[y * m_width + x].g = static_cast<float>(color[1]) / 255.0f;
-            //m_colors[y * m_width + x].b = static_cast<float>(color[0]) / 255.0f;
+            colores.m_r[y * m_width + x] = static_cast<float>(color[2]) / 255.0f;
+            colores.m_g[y * m_width + x] = static_cast<float>(color[1]) / 255.0f;
+            colores.m_b[y * m_width + x] = static_cast<float>(color[0]) / 255.0f;
         }
         f.ignore(paddingamount);
     }
@@ -87,7 +87,7 @@ void ImageSoa::checkHeader(ifstream &f, const unsigned char *fileheader) {
 }
 
 
-void ImageSoa::openFilein(const char *path, ifstream &f) {
+void ImageSoa::openFilein(std::filesystem::path path, ifstream &f) {
     /* function to open the image and see if there is an error */
     f.open(path, ios::in | ios::binary);
     if(!f.is_open()){
@@ -96,8 +96,34 @@ void ImageSoa::openFilein(const char *path, ifstream &f) {
     }
 }
 
-void ImageSoa::openFileout(const char *path, ofstream &f) {
-    /* function to open the image and see if there is an error */
+void ImageSoa::Export2(ofstream &j, unsigned char *fileheader, unsigned char *informationheader, const int paddingamount,
+                    const int filesize) const {
+
+    unsigned char bmpPad[3] = {0, 0, 0};
+    fileheader[2] = filesize;
+    fileheader[10] = fileheadersize + informationheadersize;
+    j.write(reinterpret_cast<char *>(fileheader), fileheadersize);
+
+    informationheader[0] = informationheadersize;
+    j.write(reinterpret_cast<char *>(informationheader), informationheadersize);
+
+    for (int y = 0; y < m_height; y++) {
+        for (int x = 0; x < m_width; x++) {
+            unsigned char r = static_cast<unsigned char>(GetColorRed(x,y) * 255.0f);
+            unsigned char g = static_cast<unsigned char>(GetColorGreen(x,y) * 255.0f);
+            unsigned char b = static_cast<unsigned char>(GetColorBlue(x,y) * 255.0f);
+
+            unsigned char color[] = {b, g, r};
+            j.write(reinterpret_cast<char *>(color), 3);
+        }
+        j.write(reinterpret_cast<char *>(bmpPad), paddingamount);
+    }
+
+    j.close();
+}
+
+void ImageSoa::openFileout(std::filesystem::path path, ofstream &f) {
+
     f.open(path, ios::out | ios::binary);
     if(!f.is_open()){
         cout << "El fichero no pudo ser abierto" << endl;
