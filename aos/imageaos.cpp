@@ -32,7 +32,7 @@ Image::~Image() = default;
 
 /* Funciones públicas */
 
-bool Image::Copy(const char *SRC, const char* DEST) {
+bool Image::Copy(std::filesystem::path SRC, std::filesystem::path DEST) {
     /* Esta función coge*/
     Image::Read(SRC);
     std::ifstream src(SRC, std::ios::binary);
@@ -279,7 +279,7 @@ void Image::GaussianBlur(const char* SRC, const char* DST) {
 
 /* Funciones privadas*/
 
-void Image::Read(const char *path) {
+void Image::Read(std::filesystem::path path) {
     /* Esta función lee una imagen y comprueba que todos los campos de la cabecera sean correctos y guarda en la clase
      * ImageSoa los valores para m_width, m_height y m_colors */
 
@@ -349,18 +349,18 @@ void Image::checkHeader(ifstream &f, const unsigned char *fileheader) {
 }
 
 
-void Image::openFilein(const char *path, ifstream &f) {
+void Image::openFilein(std::filesystem::path path, ifstream &f) {
     /* function to open the image and see if there is an error */
-    f.open(path, ios::in | ios::binary);
+    f.open(path.generic_string(), ios::in | ios::binary);
     if(!f.is_open()){
         cout << "El fichero no pudo ser abierto" << endl;
         exit(-1);
     }
 }
 
-void Image::openFileout(const char *path, ofstream &f) {
+void Image::openFileout(std::filesystem::path path, ofstream &f) {
     /* function to open the image and see if there is an error */
-    f.open(path, ios::out | ios::binary);
+    f.open(path.generic_string(), ios::out | ios::binary);
     if(!f.is_open()){
         cout << "El fichero no pudo ser abierto" << endl;
         exit(-1);

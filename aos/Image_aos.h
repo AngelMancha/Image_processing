@@ -23,7 +23,7 @@ public:
     ~Image();// destructor
 
 
-    bool Copy(const char *SRC, const char* DEST);
+    bool Copy(std::filesystem::path SRC, std::filesystem::path DEST);
     void GrayScale(const char* SRC, const char* DST);
     void GaussianBlur(const char* SRC, const char* DST);
     void Export(const char *path) const;
@@ -35,9 +35,9 @@ private:
     int m_height; // atributo para definit la altura de la imagen en px
     std::vector<Color> m_colors; // vector donde guardamos la ESTRUCTURA de los colores
 
-    static void openFilein(const char *path, std::basic_ifstream<char> &f) ;
-    static void openFileout(const char *path, std::basic_ofstream<char> &f) ;
-    void Read(const char* path);
+    static void openFilein(std::filesystem::path path, std::basic_ifstream<char> &f) ;
+    static void openFileout(std::filesystem::path path, std::basic_ofstream<char> &f) ;
+    void Read(std::filesystem::path path);
     static void checkHeader(std::ifstream &f, const unsigned char *fileheader) ;
     static void checkInformationHeader(std::ifstream &f, const unsigned char *informationheader) ;
     void readColor(std::ifstream &f, int paddingamount);[[nodiscard]] Color GetColor(int x, int y) const;
