@@ -1,4 +1,4 @@
-
+//main
 #include <iostream>
 #include <vector>
 #include <filesystem>
@@ -17,7 +17,7 @@ std::vector<std::filesystem::path> getImgPaths(const std::string& path){
     return archivosBMP;
 }
 
-int funcion(std::vector<std::filesystem::path> paths, std::filesystem::path outpath, std::string operation ) {
+int funcion(std::vector<std::filesystem::path> paths, std::filesystem::path outpath, std::string operation) {
     for (const auto &path: paths)
     {
         if(operation=="copy"){

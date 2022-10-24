@@ -12,7 +12,7 @@ Colores::Colores() : m_r(0), m_g(0), m_b(0) {}
 Colores::Colores(std::vector<int> m_r, std::vector<int> m_g, std::vector<int> m_b): m_r(std::move(m_r)),m_g(std::move(m_g)),m_b(std::move(m_b)) {}
 Colores::~Colores()= default;
 
-
+//
 ImageSoa::ImageSoa(int width, int height): m_width(width), m_height(height) {}
 ImageSoa::~ImageSoa() = default;
 

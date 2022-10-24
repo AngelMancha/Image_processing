@@ -1,5 +1,5 @@
 //
-// Created by navar on 10/19/2022.
+// Created by navar
 //
 #include <vector>
 #include <fstream>

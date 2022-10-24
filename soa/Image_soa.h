@@ -24,7 +24,7 @@ class ImageSoa{
 public:
     ImageSoa(int width, int height); // constructor de la clase
     ~ImageSoa();// destructor
-
+///////
 
     bool Copy(const char *SRC, const char* DEST);
     void GrayScale(const char* SRC, const char* DST);

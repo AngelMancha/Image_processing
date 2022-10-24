@@ -3,7 +3,7 @@
 #include <dirent.h>
 #include "../soa/Image_soa.h"
 #include "../aos/Image_aos.h"
-
+//comment
 using namespace std;
 
 void errores(int argc, char *argv[]) {

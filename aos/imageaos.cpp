@@ -7,6 +7,7 @@ Ruth Navarro
 Alicia Gutierrez
 Alejandro Pardo
  */
+//patata
 
 #include <iostream>
 #include "Image_aos.h"
