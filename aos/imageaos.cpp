@@ -37,7 +37,8 @@ void Image::Copy(std::filesystem::path SRC, std::filesystem::path DEST) {
     Image::Read(SRC);
     std::ifstream src(SRC, std::ios::binary);
     std::ofstream dest(DEST, std::ios::binary);
-    auto target = DEST/SRC.filename();
+    std::string new_name="copia_"+(SRC.filename()).string();
+    auto target = DEST/new_name;
     try // If you want to avoid exception handling, then use the error code overload of the following functions.
     {
         std::filesystem::create_directories(DEST); // Recursively create target directory if not existing.
