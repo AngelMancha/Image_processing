@@ -114,11 +114,8 @@ void Image::Histograma(std::filesystem::path SRC, std::filesystem::path DST){
 void Image::GrayScale(std::filesystem::path SRC, std::filesystem::path DST) {
     /*we open the input and output files*/
     std::ifstream f;
-    openFilein(SRC, f);
     std::ofstream j;
-    std::string new_name="mono_"+(SRC.filename()).string();
-    auto target = DST/new_name;
-    openFileout(target, j);
+    gray_open_create_files(SRC, DST, f, j);
 
     /*Leemos el archivo para así obtener el ancho, alto y el vector de colores*/
     Image::Read(SRC);
@@ -126,12 +123,11 @@ void Image::GrayScale(std::filesystem::path SRC, std::filesystem::path DST) {
     unsigned char informationheader[informationheadersize];
     const int paddingamount = ((4-(m_width*3)%4)%4);
     const int filesize = fileheadersize + informationheadersize + m_width * m_height * 3 + paddingamount * m_height;
-
-
     f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
     int offset = fileheader[10] + (fileheader[11]<<8) + (fileheader[12]<<16) + (fileheader[13]<<24);
     f.seekg(offset,std::ios_base ::beg);
+
     /*Procedemos a realizar los cálculos pertinentes para la conversion a escala de grises*/
     Grey_calculations(f, paddingamount);
     f.close();
@@ -141,54 +137,77 @@ void Image::GrayScale(std::filesystem::path SRC, std::filesystem::path DST) {
     cout << "El fichero ha convertido a escala de grises" << endl;
 }
 
+void Image::gray_open_create_files(filesystem::path &SRC, const filesystem::path &DST, ifstream &f, ofstream &j) const {
+    openFilein(SRC, f);
+    string new_name= "mono_" + (SRC.filename()).string();
+    auto target = DST/new_name;
+    openFileout(target, j);
+}
+
 void Image::Grey_calculations(ifstream &f, const int paddingamount) {
     for (int y = 0; y < m_height; y++){
         for (int x = 0; x < m_width; x++) {
             unsigned char color[3];
+
+            /*Primero extraemos los colores del vector y los guardamos en variables normalizándolos*/
             f.read(reinterpret_cast<char*>(color),3);
             float nr = static_cast<float>(color[2])/255.0f;
             float ng = static_cast<float>(color[1])/255.0f;
             float nb= static_cast<float>(color[0])/255.0f;
-            float cr, cg, cb;
-            // 2. Transformación a intensidad lineal
-            // Rojo
-            if ( nr <= 0.04045){
-                cr = nr/12.92;}
-            if (nr > 0.04045){
-                float aux = ((nr+0.055)/1.055);
-                cr = pow(aux, 2.4);}
-            // Green
-            if ( ng <= 0.04045){
-                cg = nr/12.92;}
-            if (ng > 0.04045){
-                float aux = ((nr+0.055)/1.055);
-                cg = pow(aux, 2.4);}
-            // Blue
-            if ( nb <= 0.04045){
-                cb = nb/12.92;}
-            if (nb > 0.04045){
-                float aux = ((nb+0.055)/1.055);
-                cb = pow(aux, 2.4);}
-            //3.Transformación lineal
-            float cl = 0.2126 * cr + 0.7152 * cg + 0.0722 * cb;
-            //4. Correción gamma
-            if (cl <= 0.0031308){
-                cg = 12.92 * cl;}
-            if (cl > 0.0031308){
-                cg = 1.055 * pow(cl, (1/2.4)) - 0.055;}
-            // Asignamos a los 3 componentes el mismo valor
+
+            /*Después procedemos a ejecutar la fórmula para la conversión a escala de grises*/
+            float cr=0, cg=0, cb=0;
+            cg = Gray_formula(nr, ng, nb, cr, cg, cb);
+
+            /* Y por último asignamos a los 3 componentes del vector de colores el mismo valor*/
             m_colors[y * m_width + x].r = cg;
             m_colors[y * m_width + x].g = cg;
             m_colors[y * m_width + x].b = cg;}
         f.ignore(paddingamount);}}
 
+float Image::Gray_formula(float nr, float ng, float nb, float cr, float cg, float cb) const {
+    // 1. Transformación a intensidad lineal
+    Gray_intensidad_lineal(nr, ng, nb, cr, cg, cb);
+
+    //2.Transformación lineal
+    float cl = 0.2126 * cr + 0.7152 * cg + 0.0722 * cb;
+
+    //3. Correción gamma
+    if (cl <= 0.0031308){
+        cg = 12.92 * cl;}
+    if (cl > 0.0031308){
+        cg = 1.055 * pow(cl, (1/2.4)) - 0.055;}
+    return cg;
+}
+
+void Image::Gray_intensidad_lineal(float nr, float ng, float nb, float &cr, float &cg, float &cb) const {
+    /*Aplicamos la transformación lineal a cada uno de los colores*/
+        // Rojo
+    if ( nr <= 0.04045){
+        cr = nr/12.92;}
+    if (nr > 0.04045){
+        float aux = ((nr+0.055)/1.055);
+        cr = pow(aux, 2.4);}
+    // Green
+    if ( ng <= 0.04045){
+        cg = nr/12.92;}
+    if (ng > 0.04045){
+        float aux = ((nr+0.055)/1.055);
+        cg = pow(aux, 2.4);}
+    // Blue
+    if ( nb <= 0.04045){
+        cb = nb/12.92;}
+    if (nb > 0.04045){
+        float aux = ((nb+0.055)/1.055);
+        cb = pow(aux, 2.4);}
+}
 
 
 void Image::GaussianBlur(std::filesystem::path SRC, std::filesystem::path DST) {
     /*abrimos los ficheros de entrada y salida*/
     std::ifstream f;
     std::ofstream j;
-    open_create_gauss_files(SRC, DST, f, j);
+    Gauss_open_create_files(SRC, DST, f, j);
 
     /*Leemos el archivo para así obtener el ancho, alto y el vector de colores*/
     Image::Read(SRC);
@@ -210,31 +229,23 @@ void Image::GaussianBlur(std::filesystem::path SRC, std::filesystem::path DST) {
     cout << "El fichero ha convertido a difusión gausiana" << endl;
 }
 
-void Image::open_create_gauss_files(filesystem::path &SRC, const filesystem::path &DST, ifstream &f, ofstream &j) const {
+void Image::Gauss_open_create_files(filesystem::path &SRC, const filesystem::path &DST, ifstream &f, ofstream &j) const {
     openFilein(SRC, f);/*Escribimos el nombre con el que queremos que se guarde el fichero de salida en el directorio destino*/
     string new_name="gauss_"+(SRC.filename()).string();
     auto target = DST/new_name;
     openFileout(target, j);
 }
 
-vector<Color> Image::get_Color_vector() {
-    vector<Color>color_aux;
-    for (unsigned long long i=0; i < m_colors.size(); i++) {
-        color_aux.push_back(m_colors[i]);
-    }
-    return color_aux;
-}
 
 void Image::Gauss_calculations(ifstream &f, const int paddingamount, const vector<Color> &color_aux) {
 
     for (int y =0; y < m_height; y++) {
         for (int pyxel = 0; pyxel < m_width; pyxel++) {
-            float final_cr = 0;
-            float final_cg = 0;
-            float final_cb = 0;
+
+            float final_cr = 0, final_cg = 0, final_cb = 0;
             /*Para cada pixel obtenemos la suma de las operaciones realizadas en los 25
              * pixeles de alrededor al pyxel actual ( pyxel , y )*/
-            pixeles_alrededor(color_aux, y, pyxel, final_cr, final_cg, final_cb);
+            Gauss_pixeles_alrededor(color_aux, y, pyxel, final_cr, final_cg, final_cb);
 
             /*metemos los colores finales en el vector m_colors y normalizamos*/
             m_colors[y * m_width + pyxel].r = final_cr / 273;
@@ -245,7 +256,7 @@ void Image::Gauss_calculations(ifstream &f, const int paddingamount, const vecto
     }
 }
 
-void Image::pixeles_alrededor(const vector<Color> &color_aux, int y, int pyxel, float &final_cr, float &final_cg, float &final_cb) const {
+void Image::Gauss_pixeles_alrededor(const vector<Color> &color_aux, int y, int pyxel, float &final_cr, float &final_cg, float &final_cb) const {
 
     for (int sumatorio_s = -2; sumatorio_s < 3; sumatorio_s++) {
         for (int sumatorio_t=-2; sumatorio_t < 3; sumatorio_t++) {
@@ -317,6 +328,13 @@ void Image::Read(std::filesystem::path path) {
     cout << "El fichero ha sido leido con éxito" << endl;
 }
 
+vector<Color> Image::get_Color_vector() {
+    vector<Color>color_aux;
+    for (unsigned long long i=0; i < m_colors.size(); i++) {
+        color_aux.push_back(m_colors[i]);
+    }
+    return color_aux;
+}
 
 void Image::readColor(ifstream &f, const int paddingamount) {
     /* Esta función lee el color de cada píxel y lo guarda dentro del array de estructuras definido para los colores

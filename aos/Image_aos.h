@@ -47,14 +47,21 @@ private:
     std::vector<Color> get_Color_vector();
 
     void
-    open_create_gauss_files(std::filesystem::path &SRC, const std::filesystem::path &DST, std::ifstream &f,
+    Gauss_open_create_files(std::filesystem::path &SRC, const std::filesystem::path &DST, std::ifstream &f,
                             std::ofstream &j) const;
 
-    void pixeles_alrededor(const std::vector<Color> &color_aux, int y, int pyxel, float &final_cr, float &final_cg,
-                           float &final_cb) const;
+    void Gauss_pixeles_alrededor(const std::vector<Color> &color_aux, int y, int pyxel, float &final_cr, float &final_cg,
+                                 float &final_cb) const;
 
     void
     gauss_formula(const std::vector<Color> &color_aux, int y, int pyxel, int sumatorio_s, int sumatorio_t,
                   float &final_cr,
                   float &final_cg, float &final_cb) const;
+
+    void gray_open_create_files(std::filesystem::path &SRC, const std::filesystem::path &DST, std::ifstream &f,
+                                std::ofstream &j) const;
+
+    float Gray_formula(float nr, float ng, float nb, float cr, float cg, float cb) const;
+
+    void Gray_intensidad_lineal(float nr, float ng, float nb, float &cr, float &cg, float &cb) const;
 };
