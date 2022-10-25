@@ -68,29 +68,33 @@ void ImageSoa::Gray_open_create_files(filesystem::path &SRC, const filesystem::p
 }
 
 void ImageSoa::Gray_calculations(ifstream &f, const int paddingamount) {
-    for (int y = 0; y < m_height; y++){
+    for (int y = 0; y < m_height; y++) {
         for (int x = 0; x < m_width; x++) {
             unsigned char color[3];
+
             /*Primero extraemos los colores del vector y los guardamos en variables normalizándolos*/
-            f.read(reinterpret_cast<char*>(color),3);
-            float nr = static_cast<float>(color[2])/255.0f;
-            float ng = static_cast<float>(color[1])/255.0f;
-            float nb= static_cast<float>(color[0])/255.0f;
+            f.read(reinterpret_cast<char *>(color), 3);
+            float nr = static_cast<float>(color[2]) / 255.0f;
+            float ng = static_cast<float>(color[1]) / 255.0f;
+            float nb = static_cast<float>(color[0]) / 255.0f;
 
             /*Después procedemos a ejecutar la fórmula para la conversión a escala de grises*/
-            float cr=0, cg=0, cb=0;
+            float cr = 0, cg = 0, cb = 0;
             cg = Gray_formula(nr, ng, nb, cr, cg, cb);
 
             /* Y por último asignamos a los 3 componentes del vector de colores el mismo valor*/
             colores.m_r[y * m_width + x] = cg;
             colores.m_g[y * m_width + x] = cg;
-            colores.m_b[y * m_width + x] = cg;}
-
-        f.ignore(paddingamount);}}
+            colores.m_b[y * m_width + x] = cg;
+            f.ignore(paddingamount);
+        }
+    }
+}
 
 float ImageSoa::Gray_formula(float nr, float ng, float nb, float cr, float cg, float cb) const {
     // 1. Transformación a intensidad lineal
     Gray_intensidad_lineal(nr, ng, nb, cr, cg, cb);
+
     //2.Transformación lineal
     float cl = 0.2126 * cr + 0.7152 * cg + 0.0722 * cb;
 
@@ -130,7 +134,7 @@ void ImageSoa::Read(std::filesystem::path path) {
     /* Esta función lee una imagen y comprueba que todos los campos de la cabecera sean correctos y guarda en la clase
      * ImageSoa los valores para m_width, m_height y m_colors */
     std::ifstream f;
-    openFilein(path, f);
+    openFilein(path.generic_string(), f);
     // Definimos 2 arrays que contienen la cabecera y la información de cabecera y hacemos comprobaciones
     unsigned char fileheader[fileheadersize]; //desde el byte 0 hasta el 14 --> Contiene el byte hasta el tamaño de cabecera de BMP
     unsigned char informationheader[informationheadersize];
@@ -164,6 +168,7 @@ void ImageSoa::readColor(ifstream &f, const int paddingamount) {
             colores.m_r[y * m_width + x] = static_cast<float>(color[2]) / 255.0f;
             colores.m_g[y * m_width + x] = static_cast<float>(color[1]) / 255.0f;
             colores.m_b[y * m_width + x] = static_cast<float>(color[0]) / 255.0f;
+
         }
         f.ignore(paddingamount);
     }
@@ -198,7 +203,7 @@ void ImageSoa::checkHeader(ifstream &f, const unsigned char *fileheader) {
 
 void ImageSoa::openFilein(std::filesystem::path path, ifstream &f) {
     /* function to open the image and see if there is an error */
-    f.open(path, ios::in | ios::binary);
+    f.open(path.generic_string(), ios::in | ios::binary);
     if(!f.is_open()){
         cout << "El fichero no pudo ser abierto" << endl;
         exit(-1);
@@ -229,9 +234,9 @@ void ImageSoa::Export2(ofstream &j, unsigned char *fileheader, unsigned char *in
 
     for (int y = 0; y < m_height; y++) {
         for (int x = 0; x < m_width; x++) {
-            unsigned char r = static_cast<unsigned char>(GetColorRed(x,y) * 255.0f);
-            unsigned char g = static_cast<unsigned char>(GetColorGreen(x,y) * 255.0f);
-            unsigned char b = static_cast<unsigned char>(GetColorBlue(x,y) * 255.0f);
+            auto r = static_cast<unsigned char>(GetColorRed(x,y) * 255);
+            auto g = static_cast<unsigned char>(GetColorGreen(x,y) * 255);
+            auto b = static_cast<unsigned char>(GetColorBlue(x,y) * 255);
 
             unsigned char color[] = {b, g, r};
             j.write(reinterpret_cast<char *>(color), 3);
@@ -242,9 +247,9 @@ void ImageSoa::Export2(ofstream &j, unsigned char *fileheader, unsigned char *in
     j.close();
 }
 
-void ImageSoa::openFileout(std::filesystem::path path, ofstream &f) {
+void ImageSoa::openFileout(const std::filesystem::path& path, ofstream &f) {
 
-    f.open(path, ios::out | ios::binary);
+    f.open(path.generic_string(), ios::out | ios::binary);
     if(!f.is_open()){
         cout << "El fichero no pudo ser abierto" << endl;
         exit(-1);

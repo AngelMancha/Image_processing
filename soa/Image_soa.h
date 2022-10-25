@@ -37,7 +37,7 @@ private:
     Colores colores; //   ESTRUCTURA DE ARRAYS
 
     static void openFilein(std::filesystem::path path, std::basic_ifstream<char> &f);
-    static void openFileout(std::filesystem::path path, std::basic_ofstream<char> &f) ;
+    static void openFileout(const std::filesystem::path& path, std::basic_ofstream<char> &f) ;
     void Read(std::filesystem::path path);
     static void checkHeader(std::ifstream &f, const unsigned char *fileheader) ;
     static void checkInformationHeader(std::ifstream &f, const unsigned char *informationheader) ;
