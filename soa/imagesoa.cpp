@@ -8,12 +8,12 @@ using namespace std;
 const int fileheadersize = 14; //tamaño cabecera bitmap (bytes 14-17)
 const int informationheadersize = 40;
 
-Colores::Colores() : m_r(0), m_g(0), m_b(0) {}
+Colores::Colores() = default;
 Colores::Colores(std::vector<float> m_r, std::vector<float> m_g, std::vector<float> m_b): m_r(std::move(m_r)),m_g(std::move(m_g)),m_b(std::move(m_b)) {}
 Colores::~Colores()= default;
 
 //
-ImageSoa::ImageSoa(int width, int height): m_width(width), m_height(height) {}
+ImageSoa::ImageSoa(int width, int height): m_width(width), m_height(height), colores(std::vector<float>(m_width*m_height),std::vector<float>(m_width*m_height),std::vector<float>(m_width*m_height)) {}
 ImageSoa::~ImageSoa() = default;
 
 void ImageSoa::Copy(std::filesystem::path SRC, std::filesystem::path DEST) {

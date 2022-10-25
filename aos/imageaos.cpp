@@ -178,8 +178,11 @@ void Image::Gray_calculations(ifstream &f, const int paddingamount) {
             /* Y por último asignamos a los 3 componentes del vector de colores el mismo valor*/
             m_colors[y * m_width + x].r = cg;
             m_colors[y * m_width + x].g = cg;
-            m_colors[y * m_width + x].b = cg;}
-        f.ignore(paddingamount);}}
+            m_colors[y * m_width + x].b = cg;
+        }
+        f.ignore(paddingamount);
+    }
+}
 
 float Image::Gray_formula(float nr, float ng, float nb, float cr, float cg, float cb) const {
     // 1. Transformación a intensidad lineal
