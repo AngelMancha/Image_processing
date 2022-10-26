@@ -55,4 +55,21 @@ private:
     float GetColorRed(int x, int y) const;
     float GetColorGreen(int x, int y) const;
     float GetColorBlue(int x, int y) const;
+
+    void Gauss_open_create_files(std::filesystem::path &SRC, const std::filesystem::path &DST, std::ifstream &f,
+                                 std::ofstream &j) const;
+
+    void gauss_aux_vector(std::vector<float> &color_aux_red, std::vector<float> &color_aux_green,
+                          std::vector<float> &color_aux_blue);
+
+    void gauss_calculations(std::ifstream &f, const int paddingamount, const std::vector<float> &color_aux_red,
+                            const std::vector<float> &color_aux_green, const std::vector<float> &color_aux_blue);
+
+    void gauss_pyxeles_alrededor(const std::vector<float> &color_aux_red, const std::vector<float> &color_aux_green,
+                                 const std::vector<float> &color_aux_blue, int y, int pyxel, float &final_cr,
+                                 float &final_cg, float &final_cb) const;
+
+    void gauss_formula(const std::vector<float> &color_aux_red, const std::vector<float> &color_aux_green,
+                       const std::vector<float> &color_aux_blue, int y, int pyxel, int sumatorio_s, int sumatorio_t,
+                       float &final_cr, float &final_cg, float &final_cb) const;
 };

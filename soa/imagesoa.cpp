@@ -260,8 +260,8 @@ void ImageSoa::Export2(ofstream &j, unsigned char *fileheader, unsigned char *in
 }
 
 void ImageSoa::openFileout(std::filesystem::path path, ofstream &f) {
-
-    f.open(path, ios::out | ios::binary);
+    f.open(path.generic_string(), ios::out | ios::binary);
+    //f.open(path, ios::out | ios::binary);
     if(!f.is_open()){
         cout << "El fichero no pudo ser abierto" << endl;
         exit(-1);

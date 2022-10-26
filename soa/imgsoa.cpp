@@ -20,7 +20,7 @@ std::vector<std::filesystem::path> getImgPaths(const std::string& path){
 int funcion(std::vector<std::filesystem::path> paths, std::filesystem::path outpath, std::string operation) {
     for (const auto &path: paths)
     {
-        if(operation=="copy"){
+       if(operation=="copy"){
             ImageSoa copia(0, 0);
             copia.Copy(path, outpath);
         }
