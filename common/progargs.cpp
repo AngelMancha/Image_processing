@@ -1,34 +1,50 @@
 #include <iostream>
-#include <cstring>
-#include <dirent.h>
 #include "../soa/Image_soa.h"
 #include "../aos/Image_aos.h"
 //comment
 using namespace std;
 
-void errores(int argc, char *argv[]) {
-    if(argc != 3) {
+
+void errores(int numargs, std::string_view indir, std::string_view outdir, std::string_view operation) {
+
+    std::filesystem::path inpath(indir);
+    std::filesystem::path outpath(outdir);
+
+
+    if(numargs != 4) {
         cerr << "Wrong format:\nimage in_path out_path oper\noperation: copy, histo, mono, gauss";
     }
 
-    if(strcmp(argv[2], "copy") != 0  || strcmp(argv[2], "histo") != 0 || strcmp(argv[2], "mono") != 0 || strcmp(argv[2], "gauss") !=0){
-        cerr << "Unexpected operation:"<<argv[2]<<"\nimage in_path out_path oper\noperation: copy, histo, mono, gauss";
+    if((operation != "copy") && (operation != "histo") && (operation != "gauss") && (operation != "mono")) {
+        cerr << "Unexpected operation:" << operation << "\nimage in_path out_path oper \noperation: copy, histo, mono, gauss";
     }
 
-    DIR *dirin = opendir(argv[0]);
-    if(dirin == nullptr){
-        cerr << "Input path: "<<argv[0]<<"\nOutput path: "<<argv[1]<<"\nCannot open directory: "<<argv[0]<<"\nimage in_path out_path oper\noperation: copy, histo, mono, gauss";
+    if(!std::filesystem::exists(inpath)){
+        cerr << "Input path: " << inpath << "\nOutput path: " << outdir << "\nCannot open directory: " <<"["<<inpath<<"]" << "\nimage in_path out_path oper\noperation: copy, histo, mono, gauss";
     }
 
-    DIR *dirout = opendir(argv[1]);
-    if(dirout == nullptr){
-        cerr << "Input path: "<<argv[0]<<"\nOutput path: "<<argv[1]<<"\nOutput directory"<<argv[1]<<"does not exist\nimage in_path out_path oper\noperation: copy, histo, mono, gauss";
+
+    if(!std::filesystem::exists(outpath)){
+        cerr << "Input path: " << outpath << "\nOutput path: " << outpath << "\nCannot open directory: " <<"["<<outpath<<"]" << "\nimage in_path out_path oper\noperation: copy, histo, mono, gauss";
     }
 
 }
 
-void tiempo_ejecucion(float tload, float tstore, float top, DIR *dirin, DIR *dirout,char archivo, char op){
-    cout << "Input path: "<<dirin<<"\nOutput path: "<<dirout<<"File: "<<archivo<<" (time: "<<tload+top+tstore<<")\nLoad time: "<<tload;
-    cout << op<<" time: "<<top<<"\nStore time: "<<tstore<<"\n";
+void tiempo_ejecucion(float tload, float tstore, float top, std::filesystem::path inpath, std::filesystem::path outpath, std::string_view op){
+
+    cout << "Input path: "<<inpath<<"\nOutput path: "<<outpath<<"\nFile: "<<inpath.filename()<<" (time: "<<tload+top+tstore<<")\nLoad time: "<<tload<<endl;
+    cout << op<<" time: "<<top<<endl;
+    cout<<"Store time: "<<tstore<<"\n";
 }
 
+std::vector<std::filesystem::path> getImgPaths(const std::string& path){
+    std::vector<std::filesystem::path> archivosBMP;
+    for (const std::filesystem::directory_entry & entrada: std::filesystem::directory_iterator(path))
+    {
+        if(entrada.path().extension()==".bmp")
+        {
+            archivosBMP.push_back(entrada.path());
+        }
+    }
+    return archivosBMP;
+}

@@ -1,6 +1,3 @@
-//
-// Created by navar
-//
 #include <vector>
 #include <fstream>
 #include <filesystem>
@@ -27,11 +24,15 @@ public:
     void GrayScale(std::filesystem::path SRC, std::filesystem::path DST);
     void GaussianBlur(std::filesystem::path SRC, std::filesystem::path DST);
     void Histograma(std::filesystem::path SRC,std::filesystem::path DST);
+    static int funcion(std::vector<std::filesystem::path> paths, std::filesystem::path outpath, std::string op);
 
 private:
     int m_width; // atributo para definit la altura de la imagen en px
     int m_height; // atributo para definit la altura de la imagen en px
     std::vector<Color> m_colors; // vector donde guardamos la ESTRUCTURA de los colores
+    int load;
+    int store;
+    int operacion;
 
     /*COMUNES A TODAS LAS FUNCIONES*/
     static void openFilein(std::filesystem::path path, std::basic_ifstream<char> &f) ;

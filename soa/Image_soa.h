@@ -30,12 +30,16 @@ public:
     void GrayScale(std::filesystem::path SRC, std::filesystem::path DST);
     void Export2(std::ofstream &j, unsigned char *fileheader, unsigned char *informationheader, int paddingamount, int filesize) const;
     void Histograma(std::filesystem::path SRC, std::filesystem::path DST);
-
+    //Elegir funcion
+    static int funcion(std::vector<std::filesystem::path> paths, std::filesystem::path outpath, std::string operation);
 
 private:
     int m_width; // atributo para definit la altura de la imagen en px
     int m_height; // atributo para definit la altura de la imagen en px
     Colores colores; //   ESTRUCTURA DE ARRAYS
+    int load;
+    int store;
+    int operacion;
 
     static void openFilein(std::filesystem::path path, std::basic_ifstream<char> &f);
     static void openFileout(std::filesystem::path path, std::basic_ofstream<char> &f) ;
@@ -83,5 +87,6 @@ private:
                              const std::vector<int> &b_colors) const;
 
     void Histo_get_intensities(std::ifstream &f);
+
 
 };

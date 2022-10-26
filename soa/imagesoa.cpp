@@ -3,6 +3,8 @@
 #include <filesystem>
 #include <cmath>
 #include <utility>
+#include "../common/common.h"
+#include <chrono>
 using namespace std;
 /* Variables globales */
 const int fileheadersize = 14; //tamaño cabecera bitmap (bytes 14-17)
@@ -17,11 +19,15 @@ ImageSoa::ImageSoa(int width, int height): m_width(width), m_height(height) {}
 ImageSoa::~ImageSoa() = default;
 
 void ImageSoa::Copy(std::filesystem::path SRC, std::filesystem::path DEST) {
+    auto start = std::chrono::high_resolution_clock::now();
     ImageSoa::Read(SRC);
     std::ifstream src(SRC, std::ios::binary);
     std::ofstream dest(DEST, std::ios::binary);
     std::string new_name="copia_"+(SRC.filename()).string();
     auto target = DEST/new_name;
+    auto end = std::chrono::high_resolution_clock::now();
+    load = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    start = std::chrono::high_resolution_clock::now();
     try // If you want to avoid exception handling, then use the error code overload of the following functions.
     {
         std::filesystem::create_directories(DEST); // Recursively create target directory if not existing.
@@ -31,9 +37,13 @@ void ImageSoa::Copy(std::filesystem::path SRC, std::filesystem::path DEST) {
     {
         std::cout << e.what();
     }
+    end = std::chrono::high_resolution_clock::now();
+    operacion = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    store = 0;
 }
 
 void ImageSoa::Histograma(std::filesystem::path SRC, std::filesystem::path DST){
+    auto start = std::chrono::high_resolution_clock::now();
     std::ifstream f;
     openFilein(SRC, f);
     unsigned char fileheader[fileheadersize];
@@ -46,15 +56,23 @@ void ImageSoa::Histograma(std::filesystem::path SRC, std::filesystem::path DST){
     colores.m_r.resize(m_width*m_height);
     colores.m_g.resize(m_width*m_height);
     colores.m_b.resize(m_width*m_height);
-
+    auto end = std::chrono::high_resolution_clock::now();
+    load = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    start = std::chrono::high_resolution_clock::now();
     Histo_get_intensities(f);
+
     //vectores donde guardaremos el numero de ocurrencias
     std::vector<int> r_colors(256);
     std::vector<int> g_colors(256);
     std::vector<int> b_colors(256);
 
     Histo_count_ocurrencies(r_colors, g_colors, b_colors);
+    end = std::chrono::high_resolution_clock::now();
+    operacion = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    start = std::chrono::high_resolution_clock::now();
     Histo_create_output(SRC, DST, r_colors, g_colors, b_colors);
+    end = std::chrono::high_resolution_clock::now();
+    store = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
 }
 
@@ -111,6 +129,7 @@ void ImageSoa::Histo_get_intensities(ifstream &f) {
 
 void ImageSoa::GrayScale(std::filesystem::path SRC, std::filesystem::path DST) {
     /*we open the input and output files*/
+    auto start = std::chrono::high_resolution_clock::now();
     std::ifstream f;
     std::ofstream j;
     Gray_open_create_files(SRC, DST, f, j);
@@ -125,14 +144,20 @@ void ImageSoa::GrayScale(std::filesystem::path SRC, std::filesystem::path DST) {
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
     int offset = fileheader[10] + (fileheader[11]<<8) + (fileheader[12]<<16) + (fileheader[13]<<24);
     f.seekg(offset,std::ios_base ::beg);
-
+    auto end = std::chrono::high_resolution_clock::now();
+    load = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
     /*Procedemos a realizar los cálculos pertinentes para la conversion a escala de grises*/
+    start = std::chrono::high_resolution_clock::now();
     Gray_calculations(f, paddingamount);
     f.close();
-
+    end = std::chrono::high_resolution_clock::now();
+    operacion = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
     /*Exportamos el archivo al fichero de salida*/
+    start = std::chrono::high_resolution_clock::now();
     Export2(j, fileheader, informationheader, paddingamount, filesize);
-    cout << "El fichero ha convertido a escala de grises" << endl;
+    end = std::chrono::high_resolution_clock::now();
+    store = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+
 }
 
 void ImageSoa::Gray_open_create_files(filesystem::path &SRC, const filesystem::path &DST, ifstream &f, ofstream &j) const {
@@ -236,7 +261,6 @@ void ImageSoa::Read(std::filesystem::path path) {
     const int paddingamount = ((4-(m_width*3)%4)%4);
     readColor(f, paddingamount);
     f.close();
-    cout << "El fichero ha sido leido con éxito" << endl;
 }
 
 void ImageSoa::Read2(std::filesystem::path path) {
@@ -261,7 +285,6 @@ void ImageSoa::Read2(std::filesystem::path path) {
     colores.m_b.resize(m_width*m_height);
     colores.m_g.resize(m_width*m_height);
     f.close();
-    cout << "El fichero ha sido leido con éxito" << endl;
 }
 
 
@@ -371,6 +394,7 @@ void ImageSoa::Gauss_open_create_files(filesystem::path &SRC, const filesystem::
 
 
 void ImageSoa::GaussianBlur(std::filesystem::path SRC, std::filesystem::path DST) {
+    auto start = chrono::steady_clock::now();
     std::ifstream f;
     std::ofstream j;
     Gauss_open_create_files(SRC, DST, f, j);
@@ -383,20 +407,23 @@ void ImageSoa::GaussianBlur(std::filesystem::path SRC, std::filesystem::path DST
     const int filesize = fileheadersize + informationheadersize + m_width * m_height * 3 + paddingamount * m_height;
     f.read(reinterpret_cast<char *>(fileheader), fileheadersize);
     f.read(reinterpret_cast<char *>(informationheader), informationheadersize);
-
+    auto end = chrono::steady_clock::now();
+    load = chrono::duration_cast<chrono::milliseconds>(end - start).count();
+    start = chrono::steady_clock::now();
     /*Inicializamos 3 vectores auxiliares para guardar los colores*/
     vector<float> color_aux_red;
     vector<float> color_aux_green;
     vector<float> color_aux_blue;
     gauss_aux_vector(color_aux_red, color_aux_green, color_aux_blue);
-
     gauss_calculations(f, paddingamount, color_aux_red, color_aux_green, color_aux_blue);
-
-
     f.close();
+    end = chrono::steady_clock::now();
+    operacion = chrono::duration_cast<chrono::milliseconds>(end - start).count();
     /*Exportamos el archivo al fichero de salida*/
+    start = chrono::steady_clock::now();
     Export2(j, fileheader, informationheader, paddingamount, filesize);
-    cout << "El fichero ha convertido a difusión gausiana" << endl;
+    end = chrono::steady_clock::now();
+    store = chrono::duration_cast<chrono::milliseconds>(end - start).count();
 }
 
 void ImageSoa::gauss_calculations(ifstream &f, const int paddingamount, const vector<float> &color_aux_red,
@@ -487,5 +514,38 @@ ImageSoa::gauss_aux_vector(vector<float> &color_aux_red, vector<float> &color_au
     for (unsigned long long i=0; i < colores.m_b.size(); i++) {
         color_aux_blue.push_back(colores.m_b[i]);
     }
+}
+
+int ImageSoa::funcion(std::vector<std::filesystem::path> paths, std::filesystem::path outpath, std::string op) {
+    for (const auto &path: paths)
+    {
+        if(op=="copy"){
+            ImageSoa copia(0, 0);
+            copia.Copy(path, outpath);
+            tiempo_ejecucion(copia.load,copia.store,copia.operacion,path,outpath,op);
+
+        }
+
+        if(op=="mono"){
+            ImageSoa mono(0, 0);
+            mono.GrayScale(path, outpath);
+            tiempo_ejecucion(mono.load,mono.store,mono.operacion,path,outpath,op);
+
+        }
+        if(op=="histo") {
+            ImageSoa histo(0, 0);
+            histo.Histograma(path, outpath);
+            tiempo_ejecucion(histo.load,histo.store,histo.operacion,path,outpath,op);
+        }
+        if(op=="gauss"){
+            ImageSoa gauss(0, 0);
+            gauss.GaussianBlur(path, outpath);
+            tiempo_ejecucion(gauss.load,gauss.store,gauss.operacion,path,outpath,op);
+
+        }
+
+    }
+    return 0;
+
 }
 
