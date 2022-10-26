@@ -42,9 +42,6 @@ private:
     void readColor(std::ifstream &f, int paddingamount);
     [[nodiscard]] Color GetColor(int x, int y) const;
     void Export2(std::ofstream &j, unsigned char *fileheader, unsigned char *informationheader, int paddingamount, int filesize) const;
-    void set_properties(const unsigned char *informationheader);
-    static void Read_info(std::ifstream &f, char *fileheader, char *informationheader) ;
-
     /*GRAY*/
     void Gray_calculations(std::ifstream &f, const int paddingamount);
     void Gray_open_create_files(std::filesystem::path &SRC, const std::filesystem::path &DST, std::ifstream &f, std::ofstream &j) const;
