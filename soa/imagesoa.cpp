@@ -41,7 +41,7 @@ void ImageSoa::GrayScale(std::filesystem::path SRC, std::filesystem::path DST) {
     Gray_open_create_files(SRC, DST, f, j);
 
     /*Leemos el archivo para así obtener el ancho, alto y el vector de colores*/
-    ImageSoa::Read(SRC);
+    ImageSoa::Read2(SRC);
     unsigned char fileheader[fileheadersize];
     unsigned char informationheader[informationheadersize];
     const int paddingamount = ((4-(m_width*3)%4)%4);
@@ -165,6 +165,31 @@ void ImageSoa::Read(std::filesystem::path path) {
     colores.m_g.resize(m_width*m_height);
     const int paddingamount = ((4-(m_width*3)%4)%4);
     readColor(f, paddingamount);
+    f.close();
+    cout << "El fichero ha sido leido con éxito" << endl;
+}
+
+void ImageSoa::Read2(std::filesystem::path path) {
+    /* Esta función lee una imagen y comprueba que todos los campos de la cabecera sean correctos y guarda en la clase
+     * ImageSoa los valores para m_width, m_height y m_colors */
+    std::ifstream f;
+    openFilein(path, f);
+    // Definimos 2 arrays que contienen la cabecera y la información de cabecera y hacemos comprobaciones
+    unsigned char fileheader[fileheadersize]; //desde el byte 0 hasta el 14 --> Contiene el byte hasta el tamaño de cabecera de BMP
+    unsigned char informationheader[informationheadersize];
+    f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
+    checkHeader(f, fileheader); // Comprobamos que la cabecera sea correcta llamando a la funcion checkHeader
+    f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
+    checkInformationHeader(f, informationheader);  // Restricción para que el fichero pueda ser válido
+    int offset = fileheader[10] + (fileheader[11]<<8) + (fileheader[12]<<16) + (fileheader[13]<<24);
+    f.seekg(offset,std::ios_base ::beg);
+    //Anchura en px de la imagen (Comprende desde el byte 18-21)
+    m_width = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
+    //Altura en px de la imagen (Comprende desde el byte 22-25)
+    m_height = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
+    colores.m_r.resize(m_width*m_height);
+    colores.m_b.resize(m_width*m_height);
+    colores.m_g.resize(m_width*m_height);
     f.close();
     cout << "El fichero ha sido leido con éxito" << endl;
 }

@@ -62,42 +62,22 @@ void Image::Histograma(std::filesystem::path SRC, std::filesystem::path DST){
     m_height = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
     m_colors.resize(m_width*m_height);
 
-    const int paddingamount = ((4-(m_width*3)%4)%4);
-    //matriz de colores
-    for (int y = 0; y<m_height; y++){
-        for (int x = 0; x < m_width; x++) {
-            unsigned char color[3];
-            f.read(reinterpret_cast<char*>(color),3);
-
-            m_colors[y*m_width+x].r = color[2];
-            m_colors[y*m_width+x].g = color[1];
-            m_colors[y*m_width+x].b = color[0];
-
-        }
-        f.ignore(paddingamount);
-    }
-    f.close();
+    Histo_get_intensities(f);
     //vectores donde guardaremos el numero de ocurrencias
     std::vector<int> r_colors(256);
     std::vector<int> g_colors(256);
     std::vector<int> b_colors(256);
 
-    int r,g,b;
-    //recorremos nuestra matriz de colores para rellenar nuestras listas de ocurrencias
-    for(int i=0;i<m_width*m_height;++i){
-        //aumentamos en uno el valor de la posicion (de la lista) que coincide con la intensidad del pixel rojo
-        r=m_colors[i].r;
-        r_colors[r]+=1;
-        //aumentamos en uno el valor de la posicion (de la lista) que coincide con la intensidad del pixel verde
-        g=m_colors[i].g;
-        g_colors[g]+=1;
-        //aumentamos en uno el valor de la posicion (de la lista) que coincide con la intensidad del pixel azul
-        b=m_colors[i].b;
-        b_colors[b]+=1;
-    }
-    std::string new_name="histo_"+(SRC.filename().replace_extension(".hst")).string();
+    Histo_count_ocurrencies(r_colors, g_colors, b_colors);
+    Histo_create_output(SRC, DST, r_colors, g_colors, b_colors);
+
+}
+
+void Image::Histo_create_output(const filesystem::path &SRC, const filesystem::path &DST, const vector<int> &r_colors,
+                                const vector<int> &g_colors, const vector<int> &b_colors) const {
+    string new_name= "histo_" + (SRC.filename().replace_extension(".hst")).string();
     auto target = DST/new_name;
-    std::ofstream output_file(target);
+    ofstream output_file(target);
     for(int x=0;x<256;x++){
         output_file<<r_colors[x]<<endl;
     }
@@ -108,7 +88,40 @@ void Image::Histograma(std::filesystem::path SRC, std::filesystem::path DST){
         output_file<<b_colors[x]<<endl;
     }
     output_file.close();
+}
 
+void Image::Histo_count_ocurrencies(vector<int> &r_colors, vector<int> &g_colors, vector<int> &b_colors) {
+    int r,g,b;
+    //recorremos nuestra matriz de colores para rellenar nuestras listas de ocurrencias
+    for(int i=0; i < m_width * m_height; ++i){
+        //aumentamos en uno el valor de la posicion (de la lista) que coincide con la intensidad del pixel rojo
+        r= m_colors[i].r;
+        r_colors[r]+=1;
+        //aumentamos en uno el valor de la posicion (de la lista) que coincide con la intensidad del pixel verde
+        g= m_colors[i].g;
+        g_colors[g]+=1;
+        //aumentamos en uno el valor de la posicion (de la lista) que coincide con la intensidad del pixel azul
+        b= m_colors[i].b;
+        b_colors[b]+=1;
+    }
+}
+
+void Image::Histo_get_intensities(ifstream &f) {
+    const int paddingamount = ((4 - (m_width * 3) % 4) % 4);
+    //matriz de colores
+    for (int y = 0; y < m_height; y++){
+        for (int x = 0; x < m_width; x++) {
+            unsigned char color[3];
+            f.read(reinterpret_cast<char*>(color),3);
+
+            m_colors[y * m_width + x].r = color[2];
+            m_colors[y * m_width + x].g = color[1];
+            m_colors[y * m_width + x].b = color[0];
+
+        }
+        f.ignore(paddingamount);
+    }
+    f.close();
 }
 
 void Image::GrayScale(std::filesystem::path SRC, std::filesystem::path DST) {
@@ -118,7 +131,7 @@ void Image::GrayScale(std::filesystem::path SRC, std::filesystem::path DST) {
     Gray_open_create_files(SRC, DST, f, j);
 
     /*Leemos el archivo para así obtener el ancho, alto y el vector de colores*/
-    Image::Read(SRC);
+    Image::Read2(SRC);
     unsigned char fileheader[fileheadersize];
     unsigned char informationheader[informationheadersize];
     const int paddingamount = ((4-(m_width*3)%4)%4);
@@ -302,6 +315,31 @@ void Image::Gauss_formula(const vector<Color> &color_aux, int y, int pyxel, int 
 /* Funciones privadas*/
 
 void Image::Read(std::filesystem::path path) {
+    /* Esta función lee una imagen y comprueba que todos los campos de la cabecera sean correctos y guarda en la clase
+     * ImageSoa los valores para m_width, m_height y m_colors */
+    std::ifstream f;
+    openFilein(path, f);
+    // Definimos 2 arrays que contienen la cabecera y la información de cabecera y hacemos comprobaciones
+    unsigned char fileheader[fileheadersize]; //desde el byte 0 hasta el 14 --> Contiene el byte hasta el tamaño de cabecera de BMP
+    unsigned char informationheader[informationheadersize];
+    f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
+    checkHeader(f, fileheader); // Comprobamos que la cabecera sea correcta llamando a la funcion checkHeader
+    f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
+    checkInformationHeader(f, informationheader);  // Restricción para que el fichero pueda ser válido
+    int offset = fileheader[10] + (fileheader[11]<<8) + (fileheader[12]<<16) + (fileheader[13]<<24);
+    f.seekg(offset,std::ios_base ::beg);
+    //Anchura en px de la imagen (Comprende desde el byte 18-21)
+    m_width = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
+    //Altura en px de la imagen (Comprende desde el byte 22-25)
+    m_height = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
+    m_colors.resize(m_width*m_height);
+    const int paddingamount = ((4-(m_width*3)%4)%4);
+    readColor(f, paddingamount);
+    f.close();
+    cout << "El fichero ha sido leido con éxito" << endl;
+}
+
+void Image::Read2(std::filesystem::path path) {
     /* Esta función lee una imagen y comprueba que todos los campos de la cabecera sean correctos y guarda en la clase
      * ImageSoa los valores para m_width, m_height y m_colors */
     std::ifstream f;
