@@ -33,6 +33,81 @@ void ImageSoa::Copy(std::filesystem::path SRC, std::filesystem::path DEST) {
     }
 }
 
+void ImageSoa::Histograma(std::filesystem::path SRC, std::filesystem::path DST){
+    std::ifstream f;
+    openFilein(SRC, f);
+    unsigned char fileheader[fileheadersize];
+    f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
+
+    unsigned char informationheader[informationheadersize];
+    f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
+    m_width = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
+    m_height = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
+    colores.m_r.resize(m_width*m_height);
+    colores.m_g.resize(m_width*m_height);
+    colores.m_b.resize(m_width*m_height);
+
+    Histo_get_intensities(f);
+    //vectores donde guardaremos el numero de ocurrencias
+    std::vector<int> r_colors(256);
+    std::vector<int> g_colors(256);
+    std::vector<int> b_colors(256);
+
+    Histo_count_ocurrencies(r_colors, g_colors, b_colors);
+    Histo_create_output(SRC, DST, r_colors, g_colors, b_colors);
+
+}
+
+void ImageSoa::Histo_create_output(const filesystem::path &SRC, const filesystem::path &DST, const vector<int> &r_colors,
+                                const vector<int> &g_colors, const vector<int> &b_colors) const {
+    string new_name= "histo_" + (SRC.filename().replace_extension(".hst")).string();
+    auto target = DST/new_name;
+    ofstream output_file(target);
+    for(int x=0;x<256;x++){
+        output_file<<r_colors[x]<<endl;
+    }
+    for(int x=0;x<256;x++){
+        output_file<<g_colors[x]<<endl;
+    }
+    for(int x=0;x<256;x++){
+        output_file<<b_colors[x]<<endl;
+    }
+    output_file.close();
+}
+
+void ImageSoa::Histo_count_ocurrencies(vector<int> &r_colors, vector<int> &g_colors, vector<int> &b_colors) {
+    int r,g,b;
+    //recorremos nuestra matriz de colores para rellenar nuestras listas de ocurrencias
+    for(int i=0; i < m_width * m_height; ++i){
+        //aumentamos en uno el valor de la posicion (de la lista) que coincide con la intensidad del pixel rojo
+        r= colores.m_r[i];
+        r_colors[r]+=1;
+        //aumentamos en uno el valor de la posicion (de la lista) que coincide con la intensidad del pixel verde
+        g= colores.m_g[i];
+        g_colors[g]+=1;
+        //aumentamos en uno el valor de la posicion (de la lista) que coincide con la intensidad del pixel azul
+        b= colores.m_b[i];
+        b_colors[b]+=1;
+    }
+}
+
+void ImageSoa::Histo_get_intensities(ifstream &f) {
+    const int paddingamount = ((4 - (m_width * 3) % 4) % 4);
+    //matriz de colores
+    for (int y = 0; y < m_height; y++){
+        for (int x = 0; x < m_width; x++) {
+            unsigned char color[3];
+            f.read(reinterpret_cast<char*>(color),3);
+
+            colores.m_r[y * m_width + x] = color[2];
+            colores.m_g[y * m_width + x] = color[1];
+            colores.m_b[y * m_width + x] = color[0];
+
+        }
+        f.ignore(paddingamount);
+    }
+    f.close();
+}
 
 void ImageSoa::GrayScale(std::filesystem::path SRC, std::filesystem::path DST) {
     /*we open the input and output files*/
@@ -125,11 +200,6 @@ void ImageSoa::Gray_intensidad_lineal(float nr, float ng, float nb, float &cr, f
         cb = pow(aux, 2.4);}
 
 }
-
-
-
-
-
 
 /*
 Colores ImageSoa::get_Color_vector() {
@@ -246,7 +316,6 @@ void ImageSoa::openFilein(std::filesystem::path path, ifstream &f) {
     }
 }
 float ImageSoa::GetColorRed(int x, int y) const {
-
     return colores.m_r[y*m_width+x];
 }
 

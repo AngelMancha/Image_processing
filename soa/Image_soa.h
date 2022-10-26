@@ -29,6 +29,7 @@ public:
     void Copy(std::filesystem::path SRC, std::filesystem::path DEST);
     void GrayScale(std::filesystem::path SRC, std::filesystem::path DST);
     void Export2(std::ofstream &j, unsigned char *fileheader, unsigned char *informationheader, int paddingamount, int filesize) const;
+    void Histograma(std::filesystem::path SRC, std::filesystem::path DST);
 
 
 private:
@@ -73,4 +74,14 @@ private:
     void gauss_formula(const std::vector<float> &color_aux_red, const std::vector<float> &color_aux_green,
                        const std::vector<float> &color_aux_blue, int y, int pyxel, int sumatorio_s, int sumatorio_t,
                        float &final_cr, float &final_cg, float &final_cb) const;
+
+    //HISTOGRAMA
+    void Histo_count_ocurrencies(std::vector<int> &r_colors, std::vector<int> &g_colors, std::vector<int> &b_colors);
+
+    void Histo_create_output(const std::filesystem::path &SRC, const std::filesystem::path &DST,
+                             const std::vector<int> &r_colors, const std::vector<int> &g_colors,
+                             const std::vector<int> &b_colors) const;
+
+    void Histo_get_intensities(std::ifstream &f);
+
 };

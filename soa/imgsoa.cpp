@@ -29,12 +29,10 @@ int funcion(std::vector<std::filesystem::path> paths, std::filesystem::path outp
             ImageSoa mono(0, 0);
             mono.GrayScale(path, outpath);
         }
-/*
-        if(operation=="histo"){
+        if(operation=="histo") {
             ImageSoa histo(0, 0);
             histo.Histograma(path, outpath);
-        }*/
-
+        }
         if(operation=="gauss"){
             ImageSoa gauss(0, 0);
             gauss.GaussianBlur(path, outpath);
@@ -48,7 +46,7 @@ int funcion(std::vector<std::filesystem::path> paths, std::filesystem::path outp
 int main(int argc, char *argv[]) {
     //if toda las cosas de errores de si histo y pollas
     std::vector<std::filesystem::path> archivosBMP;
-    if(argc!=3){
+    if(argc!=4){
         cout<<"Error "<<endl;
     }
     archivosBMP = getImgPaths(argv[1]);
