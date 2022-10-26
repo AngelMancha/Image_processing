@@ -126,7 +126,22 @@ void ImageSoa::Gray_intensidad_lineal(float nr, float ng, float nb, float &cr, f
 
 }
 
-/////////////////////////////////////////////////////Guarrona
+
+
+
+
+
+/*
+Colores ImageSoa::get_Color_vector() {
+    Colores color_aux;
+
+    memcpy(&color_aux, &colores);
+    return color_aux;
+}
+ */
+
+
+/////////////////////////////////////////////////////
 void ImageSoa::Read(std::filesystem::path path) {
     /* Esta función lee una imagen y comprueba que todos los campos de la cabecera sean correctos y guarda en la clase
      * ImageSoa los valores para m_width, m_height y m_colors */
@@ -252,3 +267,131 @@ void ImageSoa::openFileout(std::filesystem::path path, ofstream &f) {
         exit(-1);
     }
 }
+
+void ImageSoa::Gauss_open_create_files(filesystem::path &SRC, const filesystem::path &DST, ifstream &f, ofstream &j) const {
+    openFilein(SRC, f);/*Escribimos el nombre con el que queremos que se guarde el fichero de salida en el directorio destino*/
+    string new_name="gauss_"+(SRC.filename()).string();
+    auto target = DST/new_name;
+    openFileout(target, j);
+}
+
+
+void ImageSoa::GaussianBlur(std::filesystem::path SRC, std::filesystem::path DST) {
+    std::ifstream f;
+    std::ofstream j;
+    Gauss_open_create_files(SRC, DST, f, j);
+    /*Leemos el archivo para así obtener el ancho, alto y el vector de colores*/
+    ImageSoa::Read(SRC);
+
+    unsigned char fileheader[fileheadersize];
+    unsigned char informationheader[informationheadersize];
+    const int paddingamount = ((4 - (m_width * 3) % 4) % 4);
+    const int filesize = fileheadersize + informationheadersize + m_width * m_height * 3 + paddingamount * m_height;
+    f.read(reinterpret_cast<char *>(fileheader), fileheadersize);
+    f.read(reinterpret_cast<char *>(informationheader), informationheadersize);
+
+    /*Inicializamos 3 vectores auxiliares para guardar los colores*/
+    vector<float> color_aux_red;
+    vector<float> color_aux_green;
+    vector<float> color_aux_blue;
+    gauss_aux_vector(color_aux_red, color_aux_green, color_aux_blue);
+
+    gauss_calculations(f, paddingamount, color_aux_red, color_aux_green, color_aux_blue);
+
+
+    f.close();
+    /*Exportamos el archivo al fichero de salida*/
+    Export2(j, fileheader, informationheader, paddingamount, filesize);
+    cout << "El fichero ha convertido a difusión gausiana" << endl;
+}
+
+void ImageSoa::gauss_calculations(ifstream &f, const int paddingamount, const vector<float> &color_aux_red,
+                                  const vector<float> &color_aux_green, const vector<float> &color_aux_blue) {
+
+
+
+    for (int y =0; y < m_height; y++) {
+        for (int pyxel = 0; pyxel < m_width; pyxel++) {
+            float final_cr = 0;
+            float final_cg = 0;
+            float final_cb = 0;
+
+            gauss_pyxeles_alrededor(color_aux_red, color_aux_green, color_aux_blue, y, pyxel, final_cr, final_cg,
+                                    final_cb);/*sumatorio_s*/
+            /*metemos los colores finales en el vector m_colors*/
+            //cout << "The color is blabalabkansaonsiabd" <<final_cr << endl;
+            colores.m_r[y * m_width + pyxel] = final_cr / 273;
+            colores.m_g[y * m_width + pyxel] = final_cg / 273;
+            colores.m_b[y * m_width + pyxel] = final_cb / 273;
+        }
+        f.ignore(paddingamount);
+    }
+}
+
+void ImageSoa::gauss_pyxeles_alrededor(const vector<float> &color_aux_red, const vector<float> &color_aux_green,
+                                       const vector<float> &color_aux_blue, int y, int pyxel, float &final_cr,
+                                       float &final_cg, float &final_cb) const {
+    for (int sumatorio_s = -2; sumatorio_s < 3; sumatorio_s++) {
+        for (int sumatorio_t=-2; sumatorio_t < 3; sumatorio_t++) {
+
+            /*Controlamos que el pyxel no esté fuera de los límites de la imagen.
+             * De ser así, asignamos 0 a las variables de los colores*/
+            if ((pyxel + sumatorio_s > m_width) or (pyxel + sumatorio_s < 0) or (y + sumatorio_t > m_height) or (y + sumatorio_t < 0)) {
+
+                final_cr = final_cr + 0;
+                final_cg = final_cg + 0;
+                final_cb = final_cb + 0;
+
+            }
+                /*cogemos el color del pyxel que está en la posición x = pyxel + sumatorio_s y la posición y = y + sumatorio_t)*/
+            else {
+                gauss_formula(color_aux_red, color_aux_green, color_aux_blue, y, pyxel, sumatorio_s,
+                              sumatorio_t, final_cr, final_cg, final_cb);
+
+
+            }
+
+        } /*loop sumatorio_t*/
+    }
+}
+
+void ImageSoa::gauss_formula(const vector<float> &color_aux_red, const vector<float> &color_aux_green,
+                             const vector<float> &color_aux_blue, int y, int pyxel, int sumatorio_s, int sumatorio_t,
+                             float &final_cr, float &final_cg, float &final_cb) const {
+    int mascara[5][5] = {{1, 4,  7,  4,  1},
+             {4, 16, 26, 16, 4},
+             {7, 26, 41, 26, 7},
+             {4, 16, 26, 16, 4},
+             {1, 4,  7,  4,  1}};
+    float nr = (color_aux_red[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s]);
+
+    float ng = (color_aux_green[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s]);
+    float nb = (color_aux_blue[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s]);
+
+
+    /*Calculamos el color para uno de los 25 pixeles que está alrededor del pyxel (x,y) */
+    //cout << "valor de la mascara es" << mascara[sumatorio_s + 2][sumatorio_t + 2] << endl;
+    float cr = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  nr;
+    float cg = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  ng;
+    float cb = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  nb;
+
+    /*le sumamos a la variable que va a recopilar la suma de todos los colores de los 25 pyxeles*/
+    final_cr = final_cr + cr;
+    final_cg = final_cg + cg;
+    final_cb = final_cb + cb;
+}
+
+void
+ImageSoa::gauss_aux_vector(vector<float> &color_aux_red, vector<float> &color_aux_green,
+                           vector<float> &color_aux_blue) {
+    for (unsigned long long i=0; i < colores.m_r.size(); i++) {
+        color_aux_red.push_back(colores.m_r[i]);
+    }
+    for (unsigned long long i=0; i < colores.m_g.size(); i++) {
+        color_aux_green.push_back(colores.m_g[i]);
+    }
+    for (unsigned long long i=0; i < colores.m_b.size(); i++) {
+        color_aux_blue.push_back(colores.m_b[i]);
+    }
+}
+
