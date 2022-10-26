@@ -58,56 +58,46 @@ void Image::Histograma(std::filesystem::path SRC, std::filesystem::path DST){
 
     unsigned char informationheader[informationheadersize];
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
-    set_properties(informationheader);
+    m_width = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
+    m_height = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
+    m_colors.resize(m_width*m_height);
 
-    Histo_get_intensities(f);
-    std::vector<int> r_colors(256);
-    std::vector<int> g_colors(256);
-    std::vector<int> b_colors(256);
-
-    Histo_count_ocurrencies(r_colors, g_colors, b_colors);
-    Histo_create_output(SRC, DST, r_colors, g_colors, b_colors);
-
-}
-
-void Image::Histo_get_intensities(ifstream &f) {
-    const int paddingamount = ((4 - (m_width * 3) % 4) % 4);
+    const int paddingamount = ((4-(m_width*3)%4)%4);
     //matriz de colores
-    for (int y = 0; y < m_height; y++){
+    for (int y = 0; y<m_height; y++){
         for (int x = 0; x < m_width; x++) {
             unsigned char color[3];
             f.read(reinterpret_cast<char*>(color),3);
 
-            m_colors[y * m_width + x].r = color[2];
-            m_colors[y * m_width + x].g = color[1];
-            m_colors[y * m_width + x].b = color[0];
+            m_colors[y*m_width+x].r = color[2];
+            m_colors[y*m_width+x].g = color[1];
+            m_colors[y*m_width+x].b = color[0];
 
         }
         f.ignore(paddingamount);
     }
     f.close();
     //vectores donde guardaremos el numero de ocurrencias
-}
-void Image::Histo_count_ocurrencies(vector<int> &r_colors, vector<int> &g_colors, vector<int> &b_colors) {
+    std::vector<int> r_colors(256);
+    std::vector<int> g_colors(256);
+    std::vector<int> b_colors(256);
+
     int r,g,b;
     //recorremos nuestra matriz de colores para rellenar nuestras listas de ocurrencias
-    for(int i=0; i < m_width * m_height; ++i){
+    for(int i=0;i<m_width*m_height;++i){
         //aumentamos en uno el valor de la posicion (de la lista) que coincide con la intensidad del pixel rojo
-        r= m_colors[i].r;
+        r=m_colors[i].r;
         r_colors[r]+=1;
         //aumentamos en uno el valor de la posicion (de la lista) que coincide con la intensidad del pixel verde
-        g= m_colors[i].g;
+        g=m_colors[i].g;
         g_colors[g]+=1;
         //aumentamos en uno el valor de la posicion (de la lista) que coincide con la intensidad del pixel azul
-        b= m_colors[i].b;
+        b=m_colors[i].b;
         b_colors[b]+=1;
     }
-}
-void Image::Histo_create_output(const filesystem::path &SRC, const filesystem::path &DST, const vector<int> &r_colors,
-                                const vector<int> &g_colors, const vector<int> &b_colors) const {
-    string new_name= "histo_" + (SRC.filename().replace_extension(".hst")).string();
+    std::string new_name="histo_"+(SRC.filename().replace_extension(".hst")).string();
     auto target = DST/new_name;
-    ofstream output_file(target);
+    std::ofstream output_file(target);
     for(int x=0;x<256;x++){
         output_file<<r_colors[x]<<endl;
     }
@@ -118,9 +108,8 @@ void Image::Histo_create_output(const filesystem::path &SRC, const filesystem::p
         output_file<<b_colors[x]<<endl;
     }
     output_file.close();
+
 }
-
-
 
 void Image::GrayScale(std::filesystem::path SRC, std::filesystem::path DST) {
     /*we open the input and output files*/
@@ -129,14 +118,16 @@ void Image::GrayScale(std::filesystem::path SRC, std::filesystem::path DST) {
     Gray_open_create_files(SRC, DST, f, j);
 
     /*Leemos el archivo para así obtener el ancho, alto y el vector de colores*/
-    Image::Read2(SRC);
+    Image::Read(SRC);
     unsigned char fileheader[fileheadersize];
     unsigned char informationheader[informationheadersize];
-
-    Read_info(f, reinterpret_cast<char *>(fileheader), reinterpret_cast<char *>(informationheader));
-
     const int paddingamount = ((4-(m_width*3)%4)%4);
     const int filesize = fileheadersize + informationheadersize + m_width * m_height * 3 + paddingamount * m_height;
+    f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
+    f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
+    int offset = fileheader[10] + (fileheader[11]<<8) + (fileheader[12]<<16) + (fileheader[13]<<24);
+    f.seekg(offset,std::ios_base ::beg);
+
     /*Procedemos a realizar los cálculos pertinentes para la conversion a escala de grises*/
     Gray_calculations(f, paddingamount);
     f.close();
@@ -144,13 +135,6 @@ void Image::GrayScale(std::filesystem::path SRC, std::filesystem::path DST) {
     /*Exportamos el archivo al fichero de salida*/
     Export2(j, fileheader, informationheader, paddingamount, filesize);
     cout << "El fichero ha convertido a escala de grises" << endl;
-}
-
-void Image::Read_info(ifstream &f, char *fileheader, char *informationheader) {
-    f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
-    f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
-    int offset = fileheader[10] + (fileheader[11]<<8) + (fileheader[12]<<16) + (fileheader[13]<<24);
-    f.seekg(offset, ios_base ::beg);
 }
 
 void Image::Gray_open_create_files(filesystem::path &SRC, const filesystem::path &DST, ifstream &f, ofstream &j) const {
@@ -178,11 +162,8 @@ void Image::Gray_calculations(ifstream &f, const int paddingamount) {
             /* Y por último asignamos a los 3 componentes del vector de colores el mismo valor*/
             m_colors[y * m_width + x].r = cg;
             m_colors[y * m_width + x].g = cg;
-            m_colors[y * m_width + x].b = cg;
-        }
-        f.ignore(paddingamount);
-    }
-}
+            m_colors[y * m_width + x].b = cg;}
+        f.ignore(paddingamount);}}
 
 float Image::Gray_formula(float nr, float ng, float nb, float cr, float cg, float cb) const {
     // 1. Transformación a intensidad lineal
@@ -201,7 +182,7 @@ float Image::Gray_formula(float nr, float ng, float nb, float cr, float cg, floa
 
 void Image::Gray_intensidad_lineal(float nr, float ng, float nb, float &cr, float &cg, float &cb) const {
     /*Aplicamos la transformación lineal a cada uno de los colores*/
-        // Rojo
+    // Rojo
     if ( nr <= 0.04045){
         cr = nr/12.92;}
     if (nr > 0.04045){
@@ -232,10 +213,10 @@ void Image::GaussianBlur(std::filesystem::path SRC, std::filesystem::path DST) {
     Image::Read(SRC);
     unsigned char fileheader[fileheadersize];
     unsigned char informationheader[informationheadersize];
-    Read_info(f, reinterpret_cast<char *>(fileheader), reinterpret_cast<char *>(informationheader));
-
     const int paddingamount = ((4 - (m_width * 3) % 4) % 4);
     const int filesize = fileheadersize + informationheadersize + m_width * m_height * 3 + paddingamount * m_height;
+    f.read(reinterpret_cast<char *>(fileheader), fileheadersize);
+    f.read(reinterpret_cast<char *>(informationheader), informationheadersize);
 
     /*definimos un vector auxiliar de colores donde vamos a aplicar las operaciones*/
     vector<Color> color_aux = get_Color_vector();
@@ -328,33 +309,6 @@ void Image::Read(std::filesystem::path path) {
     // Definimos 2 arrays que contienen la cabecera y la información de cabecera y hacemos comprobaciones
     unsigned char fileheader[fileheadersize]; //desde el byte 0 hasta el 14 --> Contiene el byte hasta el tamaño de cabecera de BMP
     unsigned char informationheader[informationheadersize];
-    Read_info(f, reinterpret_cast<char *>(fileheader), reinterpret_cast<char *>(informationheader));
-    checkHeader(f, fileheader); // Comprobamos que la cabecera sea correcta llamando a la funcion checkHeader
-    checkInformationHeader(f, informationheader);  // Restricción para que el fichero pueda ser válido
-
-    //Anchura en px de la imagen (Comprende desde el byte 18-21)
-    set_properties(informationheader);
-    const int paddingamount = ((4-(m_width*3)%4)%4);
-    readColor(f, paddingamount);
-    f.close();
-    cout << "El fichero ha sido leido con éxito" << endl;
-}
-
-void Image::set_properties(const unsigned char *informationheader) {
-    m_width = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
-    //Altura en px de la imagen (Comprende desde el byte 22-25)
-    m_height = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
-    m_colors.resize(m_width * m_height);
-}
-
-void Image::Read2(std::filesystem::path path) {
-    /* Esta función lee una imagen y comprueba que todos los campos de la cabecera sean correctos y guarda en la clase
-     * ImageSoa los valores para m_width, m_height y m_colors */
-    std::ifstream f;
-    openFilein(path, f);
-    // Definimos 2 arrays que contienen la cabecera y la información de cabecera y hacemos comprobaciones
-    unsigned char fileheader[fileheadersize]; //desde el byte 0 hasta el 14 --> Contiene el byte hasta el tamaño de cabecera de BMP
-    unsigned char informationheader[informationheadersize];
     f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
     checkHeader(f, fileheader); // Comprobamos que la cabecera sea correcta llamando a la funcion checkHeader
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
@@ -362,7 +316,12 @@ void Image::Read2(std::filesystem::path path) {
     int offset = fileheader[10] + (fileheader[11]<<8) + (fileheader[12]<<16) + (fileheader[13]<<24);
     f.seekg(offset,std::ios_base ::beg);
     //Anchura en px de la imagen (Comprende desde el byte 18-21)
-    set_properties(informationheader);
+    m_width = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
+    //Altura en px de la imagen (Comprende desde el byte 22-25)
+    m_height = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
+    m_colors.resize(m_width*m_height);
+    const int paddingamount = ((4-(m_width*3)%4)%4);
+    readColor(f, paddingamount);
     f.close();
     cout << "El fichero ha sido leido con éxito" << endl;
 }
@@ -442,7 +401,7 @@ Color Image::GetColor(int x, int y) const {
 
 
 void Image::Export2(ofstream &j, unsigned char *fileheader, unsigned char *informationheader, const int paddingamount,
-                       const int filesize) const {
+                    const int filesize) const {
 
     unsigned char bmpPad[3] = {0, 0, 0};
     fileheader[2] = filesize;
