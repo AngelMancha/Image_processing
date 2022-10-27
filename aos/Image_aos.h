@@ -14,10 +14,10 @@ struct Color{
     ~Color();
 };
 
-class ImageAos{
+class Image{
 public:
-    ImageAos(int width, int height); // constructor de la clase
-    ~ImageAos();// destructor
+    Image(int width, int height); // constructor de la clase
+    ~Image();// destructor
 
 
     void Copy(std::filesystem::path SRC, std::filesystem::path DEST);
