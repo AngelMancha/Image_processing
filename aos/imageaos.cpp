@@ -1,13 +1,7 @@
-/*
-******PROYECTO 1******
- *
-******Autores:******
-Ángel José Mancha
-Ruth Navarro
-Alicia Gutierrez
-Alejandro Pardo
- */
-//patata
+//
+// Código para el tratamiento de imágenes de una representación AOS (array of structures)
+//
+
 #include "Image_aos.h"
 #include "../common/common.h"
 #include <iostream>
@@ -19,13 +13,13 @@ Alejandro Pardo
 using namespace std;
 
 
-/* Variables globales */
+/* Definición de las variables globales */
 const int fileheadersize = 14; //tamaño cabecera bitmap (bytes 14-17)
 const int informationheadersize = 40; //desde el byte 14 hasta el 54
 
 /* Inicialización de la clase imagen y de la estructura Color*/
-Color::Color() : r(0), g(0), b(0) {} //initialize the values of the color to 0
-Color::Color(float r, float g, float b): r(r), g(g), b(b) {} //initialize to the parameters
+Color::Color() : r(0), g(0), b(0) {}
+Color::Color(float r, float g, float b): r(r), g(g), b(b) {}
 Color::~Color()= default;
 
 Image::Image(int width, int height): m_width(width), m_height(height), m_colors(vector<Color>(width * height)) {}
@@ -33,6 +27,10 @@ Image::~Image() = default;
 
 /* Funciones públicas */
 
+// La función copy no realiza ninguna transformación, solamente copia los archivos
+// Dentro de esta función llamamos a una función auxiliar Read que se encarga de hacer comprobaciones
+// para ver si el tipo de archivo que se va a manipular es el correcto
+// Una vez hecho eso se encargará de copìar la imagen de una carpeta origen a una carpeta destino
 void Image::Copy(std::filesystem::path SRC, std::filesystem::path DEST) {
     /* Esta función coge*/
     auto start = std::chrono::high_resolution_clock::now();
@@ -44,12 +42,12 @@ void Image::Copy(std::filesystem::path SRC, std::filesystem::path DEST) {
     auto end = std::chrono::high_resolution_clock::now();
     load = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
     start = std::chrono::high_resolution_clock::now();
-    try // If you want to avoid exception handling, then use the error code overload of the following functions.
+    try
     {
-        std::filesystem::create_directories(DEST); // Recursively create target directory if not existing.
+        std::filesystem::create_directories(DEST);
         std::filesystem::copy_file(SRC, target, std::filesystem::copy_options::overwrite_existing);
     }
-    catch (std::exception& e) // Not using fs::filesystem_error since std::bad_alloc can throw too.
+    catch (std::exception& e)
     {
         std::cout << e.what();
     }
@@ -58,13 +56,14 @@ void Image::Copy(std::filesystem::path SRC, std::filesystem::path DEST) {
     store = 0;
 }
 
+
+// Esta función genera un archivo de texto con el histograma de cada canal (RGB)
 void Image::Histograma(std::filesystem::path SRC, std::filesystem::path DST){
     auto start = chrono::steady_clock::now();
     std::ifstream f;
     openFilein(SRC, f);
     unsigned char fileheader[fileheadersize];
     f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
-
     unsigned char informationheader[informationheadersize];
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
     m_width = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
@@ -140,13 +139,18 @@ void Image::Histo_get_intensities(ifstream &f) {
     f.close();
 }
 
+
+// Esta función se encarga de convertir una imagen a escala de grises realizando varias transformaciones
+// Lo primero que hace esta función es llamar a la función Read2 que se encarga de examinar si
+// la imagen que manipulamos tiene el formato correcto.
+// Una vez hecho esto, llamará a la función gray_calculations que se encargará de realizar las operaciones
+// pertinentes. Cuando tengamos estas operaciones hechas, se encargará de exportar todos los cambios y crear una
+// nueva imagen que contenga los cambios con la funcion Export2.
 void Image::GrayScale(std::filesystem::path SRC, std::filesystem::path DST) {
-    /*we open the input and output files*/
     auto start = chrono::steady_clock::now();
     std::ifstream f;
     std::ofstream j;
     Gray_open_create_files(SRC, DST, f, j);
-    /*Leemos el archivo para así obtener el ancho, alto y el vector de colores*/
     Image::Read2(SRC);
     auto end = chrono::steady_clock::now();
     load=chrono::duration_cast<chrono::microseconds>(end - start).count();
@@ -159,18 +163,18 @@ void Image::GrayScale(std::filesystem::path SRC, std::filesystem::path DST) {
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
     int offset = fileheader[10] + (fileheader[11]<<8) + (fileheader[12]<<16) + (fileheader[13]<<24);
     f.seekg(offset,std::ios_base ::beg);
-    /*Procedemos a realizar los cálculos pertinentes para la conversion a escala de grises*/
     Gray_calculations(f, paddingamount);
     f.close();
     end = chrono::steady_clock::now();
     operacion=chrono::duration_cast<chrono::microseconds>(end - start).count();
-    /*Exportamos el archivo al fichero de salida*/
     start = chrono::steady_clock::now();
     Export2(j, SRC, paddingamount, filesize);
     end = chrono::steady_clock::now();
     store=chrono::duration_cast<chrono::microseconds>(end - start).count();
 }
 
+
+// Función auxiliar de GrayScale que sirve para crear y nombrar las nuevas imágenes
 void Image::Gray_open_create_files(filesystem::path &SRC, const filesystem::path &DST, ifstream &f, ofstream &j) const {
     openFilein(SRC, f);
     string new_name= "mono_" + (SRC.filename()).string();
@@ -178,22 +182,23 @@ void Image::Gray_open_create_files(filesystem::path &SRC, const filesystem::path
     openFileout(target, j);
 }
 
+
+//Función auxiliar de GrayScale que se encarga de realizar las operaciones para poder convertir a escala de grises.
+// Primeeo extrae los colores del vector y los guarda en variables normalizándolos.
+// Una vez hecho esto se ejecuta la fórmula para la conversión a escala de grises usando la función gray_formula
 void Image::Gray_calculations(ifstream &f, const int paddingamount) {
     for (int y = 0; y < m_height; y++){
         for (int x = 0; x < m_width; x++) {
             unsigned char color[3];
 
-            /*Primero extraemos los colores del vector y los guardamos en variables normalizándolos*/
             f.read(reinterpret_cast<char*>(color),3);
             float nr = static_cast<float>(color[2])/255.0f;
             float ng = static_cast<float>(color[1])/255.0f;
             float nb= static_cast<float>(color[0])/255.0f;
 
-            /*Después procedemos a ejecutar la fórmula para la conversión a escala de grises*/
             float cr=0, cg=0, cb=0;
             cg = Gray_formula(nr, ng, nb, cr, cg, cb);
 
-            /* Y por último asignamos a los 3 componentes del vector de colores el mismo valor*/
             m_colors[y * m_width + x].r = cg;
             m_colors[y * m_width + x].g = cg;
             m_colors[y * m_width + x].b = cg;}
@@ -201,13 +206,16 @@ void Image::Gray_calculations(ifstream &f, const int paddingamount) {
     }
 }
 
+
+// Es una funcion que se encarga de realizar una transformacion de intensidad lineal y transformacion lineal
+// a cada pixel y despues se encarga de realizar una corrección gamma. Toma como parámetros los valores
+// normalizados para cada color (nr,ng,nb) y también el nuevo valor que va a modificar
+// esta funcion para cb, cg y cr.
 float Image::Gray_formula(float nr, float ng, float nb, float cr, float cg, float cb) const {
     // 1. Transformación a intensidad lineal
     Gray_intensidad_lineal(nr, ng, nb, cr, cg, cb);
-
     //2.Transformación lineal
     float cl = 0.2126 * cr + 0.7152 * cg + 0.0722 * cb;
-
     //3. Correción gamma
     if (cl <= 0.0031308){
         cg = 12.92 * cl;}
@@ -216,6 +224,10 @@ float Image::Gray_formula(float nr, float ng, float nb, float cr, float cg, floa
     return cg;
 }
 
+
+// Esta funcion se encarga de obtener un nuevo color para cada valor normalizado. Toma como parámetros los valores
+// normalizados para cada color (nr,ng,nb) y también el nuevo valor que va a modificar
+// esta funcion para cb, cg y cr.
 void Image::Gray_intensidad_lineal(float nr, float ng, float nb, float &cr, float &cg, float &cb) const {
     /*Aplicamos la transformación lineal a cada uno de los colores*/
     // Rojo
@@ -239,13 +251,16 @@ void Image::Gray_intensidad_lineal(float nr, float ng, float nb, float &cr, floa
 }
 
 
+// Disminuye la nitidez de una imagen.
+// Toma como parámetros los directorios de entrada y de salida
+// Primero llama a la funcion read y despues llama a la funcion gauss_calculations que se encarga de hacer
+// las operaciones necesarias para difuminar la imagen. Despues llama a la función export2
+// que se encarga de realizar las operaciones para crear la imagen.
 void Image::GaussianBlur(std::filesystem::path SRC, std::filesystem::path DST) {
-    /*abrimos los ficheros de entrada y salida*/
     auto start = chrono::steady_clock::now();
     std::ifstream f;
     std::ofstream j;
     Gauss_open_create_files(SRC, DST, f, j);
-    /*Leemos el archivo para así obtener el ancho, alto y el vector de colores*/
     Image::Read(SRC);
     unsigned char fileheader[fileheadersize];
     unsigned char informationheader[informationheadersize];
@@ -255,22 +270,20 @@ void Image::GaussianBlur(std::filesystem::path SRC, std::filesystem::path DST) {
     f.read(reinterpret_cast<char *>(informationheader), informationheadersize);
     auto end = chrono::steady_clock::now();
     load=chrono::duration_cast<chrono::microseconds>(end - start).count();
-    /*definimos un vector auxiliar de colores donde vamos a aplicar las operaciones*/
     start = chrono::steady_clock::now();
     vector<Color> color_aux = get_Color_vector();
-
-    /*Llamamos a la función que se encarga de realizar las operaciones para difuminar el archivo*/
     Gauss_calculations(f, paddingamount, color_aux);
     f.close();
     end = chrono::steady_clock::now();
     operacion=chrono::duration_cast<chrono::microseconds>(end - start).count();
-    /*Exportamos el archivo al fichero de salida*/
     start = chrono::steady_clock::now();
     Export2(j, SRC, paddingamount, filesize);
     end = chrono::steady_clock::now();
     store=chrono::duration_cast<chrono::microseconds>(end - start).count();
 }
 
+
+// Función auxiliar de GaussianBlur que sirve para crear y nombrar las nuevas imágenes
 void Image::Gauss_open_create_files(filesystem::path &SRC, const filesystem::path &DST, ifstream &f, ofstream &j) const {
     openFilein(SRC, f);/*Escribimos el nombre con el que queremos que se guarde el fichero de salida en el directorio destino*/
     string new_name="gauss_"+(SRC.filename()).string();
@@ -279,6 +292,7 @@ void Image::Gauss_open_create_files(filesystem::path &SRC, const filesystem::pat
 }
 
 
+// Se encarga de hacer las operaciones necesarias para difuminar la imagen.
 void Image::Gauss_calculations(ifstream &f, const int paddingamount, const vector<Color> &color_aux) {
 
     for (int y =0; y < m_height; y++) {
@@ -354,8 +368,8 @@ void Image::Read(std::filesystem::path path) {
     f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
     checkHeader(path); // Comprobamos que la cabecera sea correcta llamando a la funcion checkHeader
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
-    if(informationheader[14] != 24 || informationheader[12] != 1 || 
-       informationheader[16] != 0 || informationheader[17] != 0 ||
+    if(informationheader[14] != 24 || informationheader[12] != 1 || // # planos == 1
+       informationheader[16] != 0 || informationheader[17] != 0 || // valor compresión == 0
        informationheader[18] != 0 || informationheader[19] != 0){
         cerr << "El formato BMP no es válido " << endl;
         f.close();
