@@ -236,24 +236,23 @@ Colores ImageSoa::get_Color_vector() {
  */
 
 
-/////////////////////////////////////////////////////
 void ImageSoa::Read(std::filesystem::path path) {
-    /* Esta función lee una imagen y comprueba que todos los campos de la cabecera sean correctos y guarda en la clase
-     * ImageSoa los valores para m_width, m_height y m_colors */
     std::ifstream f;
     openFilein(path, f);
-    // Definimos 2 arrays que contienen la cabecera y la información de cabecera y hacemos comprobaciones
-    unsigned char fileheader[fileheadersize]; //desde el byte 0 hasta el 14 --> Contiene el byte hasta el tamaño de cabecera de BMP
+    unsigned char fileheader[fileheadersize];
     unsigned char informationheader[informationheadersize];
     f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
     checkHeader(path); // Comprobamos que la cabecera sea correcta llamando a la funcion checkHeader
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
-    checkInformationHeader(f, informationheader);  // Restricción para que el fichero pueda ser válido
+    if(informationheader[14] != 24 || informationheader[12] != 1 ||
+       informationheader[16] != 0 || informationheader[17] != 0 ||
+       informationheader[18] != 0 || informationheader[19] != 0){
+        cerr << "El formato BMP no es válido " << endl;
+        f.close();
+    }
     int offset = fileheader[10] + (fileheader[11]<<8) + (fileheader[12]<<16) + (fileheader[13]<<24);
     f.seekg(offset,std::ios_base ::beg);
-    //Anchura en px de la imagen (Comprende desde el byte 18-21)
     m_width = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
-    //Altura en px de la imagen (Comprende desde el byte 22-25)
     m_height = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
     colores.m_r.resize(m_width*m_height);
     colores.m_b.resize(m_width*m_height);
@@ -264,22 +263,22 @@ void ImageSoa::Read(std::filesystem::path path) {
 }
 
 void ImageSoa::Read2(std::filesystem::path path) {
-    /* Esta función lee una imagen y comprueba que todos los campos de la cabecera sean correctos y guarda en la clase
-     * ImageSoa los valores para m_width, m_height y m_colors */
     std::ifstream f;
     openFilein(path, f);
-    // Definimos 2 arrays que contienen la cabecera y la información de cabecera y hacemos comprobaciones
-    unsigned char fileheader[fileheadersize]; //desde el byte 0 hasta el 14 --> Contiene el byte hasta el tamaño de cabecera de BMP
+    unsigned char fileheader[fileheadersize];
     unsigned char informationheader[informationheadersize];
     f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
-    checkHeader(path); // Comprobamos que la cabecera sea correcta llamando a la funcion checkHeader
+    checkHeader(path);
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
-    checkInformationHeader(f, informationheader);  // Restricción para que el fichero pueda ser válido
+    if(informationheader[14] != 24 || informationheader[12] != 1 ||
+       informationheader[16] != 0 || informationheader[17] != 0 ||
+       informationheader[18] != 0 || informationheader[19] != 0){
+        cerr << "El formato BMP no es válido " << endl;
+        f.close();
+    }
     int offset = fileheader[10] + (fileheader[11]<<8) + (fileheader[12]<<16) + (fileheader[13]<<24);
     f.seekg(offset,std::ios_base ::beg);
-    //Anchura en px de la imagen (Comprende desde el byte 18-21)
     m_width = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
-    //Altura en px de la imagen (Comprende desde el byte 22-25)
     m_height = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
     colores.m_r.resize(m_width*m_height);
     colores.m_b.resize(m_width*m_height);
@@ -303,21 +302,6 @@ void ImageSoa::readColor(ifstream &f, const int paddingamount) {
     }
 }
 
-
-void ImageSoa::checkInformationHeader(ifstream &f, const unsigned char *informationheader) {
-    /* Función que comprueba si el archivo es de tipo BMP considerando en número de planos, el tamaño de cada punto
-     * y el valor de compresión */
-
-    if(informationheader[14] != 24 || // tamaño de cada punto == 24 bits
-       informationheader[12] != 1 || // # planos == 1
-       informationheader[16] != 0 || // valor compresión == 0
-       informationheader[17] != 0 || // valor compresión == 0
-       informationheader[18] != 0 || // valor compresión == 0
-       informationheader[19] != 0){
-        cerr << "El formato BMP no es válido " << endl;
-        f.close();
-    }
-}
 
 
 void ImageSoa::checkHeader(std::filesystem::path SRC) {

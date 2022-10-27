@@ -354,12 +354,9 @@ void Image::Read(std::filesystem::path path) {
     f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
     checkHeader(path); // Comprobamos que la cabecera sea correcta llamando a la funcion checkHeader
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
-    if(informationheader[14] != 24 || // tamaño de cada punto == 24 bits
-       informationheader[12] != 1 || // # planos == 1
-       informationheader[16] != 0 || // valor compresión == 0
-       informationheader[17] != 0 || // valor compresión == 0
-       informationheader[18] != 0 || // valor compresión == 0
-       informationheader[19] != 0){
+    if(informationheader[14] != 24 || informationheader[12] != 1 || 
+       informationheader[16] != 0 || informationheader[17] != 0 ||
+       informationheader[18] != 0 || informationheader[19] != 0){
         cerr << "El formato BMP no es válido " << endl;
         f.close();
     }
@@ -386,12 +383,9 @@ void Image::Read2(std::filesystem::path path) {
     f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
     checkHeader(path); // Comprobamos que la cabecera sea correcta llamando a la funcion checkHeader
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
-    if(informationheader[14] != 24 || // tamaño de cada punto == 24 bits
-       informationheader[12] != 1 || // # planos == 1
-       informationheader[16] != 0 || // valor compresión == 0
-       informationheader[17] != 0 || // valor compresión == 0
-       informationheader[18] != 0 || // valor compresión == 0
-       informationheader[19] != 0){
+    if(informationheader[14] != 24 || informationheader[12] != 1 || // # planos == 1
+       informationheader[16] != 0 || informationheader[17] != 0 || // valor compresión == 0
+       informationheader[18] != 0 || informationheader[19] != 0){
         cerr << "El formato BMP no es válido " << endl;
         f.close();
     }
