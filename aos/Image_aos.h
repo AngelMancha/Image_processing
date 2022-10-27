@@ -38,7 +38,7 @@ private:
     static void openFilein(std::filesystem::path path, std::basic_ifstream<char> &f) ;
     static void openFileout(std::filesystem::path path, std::basic_ofstream<char> &f) ;
     void Read(std::filesystem::path path);
-    static void checkHeader(std::ifstream &f, const unsigned char *fileheader) ;
+    static void checkHeader(std::filesystem::path path) ;
     static void checkInformationHeader(std::ifstream &f, const unsigned char *informationheader) ;
     void readColor(std::ifstream &f, int paddingamount);
     [[nodiscard]] Color GetColor(int x, int y) const;

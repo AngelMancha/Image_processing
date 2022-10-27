@@ -352,7 +352,7 @@ void Image::Read(std::filesystem::path path) {
     unsigned char fileheader[fileheadersize]; //desde el byte 0 hasta el 14 --> Contiene el byte hasta el tamaño de cabecera de BMP
     unsigned char informationheader[informationheadersize];
     f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
-    checkHeader(f, fileheader); // Comprobamos que la cabecera sea correcta llamando a la funcion checkHeader
+    checkHeader(path); // Comprobamos que la cabecera sea correcta llamando a la funcion checkHeader
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
     checkInformationHeader(f, informationheader);  // Restricción para que el fichero pueda ser válido
     int offset = fileheader[10] + (fileheader[11]<<8) + (fileheader[12]<<16) + (fileheader[13]<<24);
@@ -376,7 +376,7 @@ void Image::Read2(std::filesystem::path path) {
     unsigned char fileheader[fileheadersize]; //desde el byte 0 hasta el 14 --> Contiene el byte hasta el tamaño de cabecera de BMP
     unsigned char informationheader[informationheadersize];
     f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
-    checkHeader(f, fileheader); // Comprobamos que la cabecera sea correcta llamando a la funcion checkHeader
+    checkHeader(path); // Comprobamos que la cabecera sea correcta llamando a la funcion checkHeader
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
     checkInformationHeader(f, informationheader);  // Restricción para que el fichero pueda ser válido
     int offset = fileheader[10] + (fileheader[11]<<8) + (fileheader[12]<<16) + (fileheader[13]<<24);
@@ -431,15 +431,19 @@ void Image::checkInformationHeader(ifstream &f, const unsigned char *information
 }
 
 
-void Image::checkHeader(ifstream &f, const unsigned char *fileheader) {
+void Image::checkHeader(std::filesystem::path SRC) {
     /* Esta función comprueba si el archivo es un BMP, en el caso que no lo sea escribe una salida de error indicando
      * que el archivo adjuntado no es un BMP */
+    unsigned char fileheader[fileheadersize];
+    std::ifstream f;
+    f.open(SRC, ios::in | ios::binary);
+    f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
+
     if(fileheader[0] != 'B' || fileheader[1] != 'M'){
         cerr << "El archivo no es de tipo BMP " << endl;
         f.close();
     }
 }
-
 
 void Image::openFilein(std::filesystem::path path, ifstream &f) {
     /* function to open the image and see if there is an error */
