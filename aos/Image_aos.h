@@ -39,7 +39,6 @@ private:
     static void openFileout(std::filesystem::path path, std::basic_ofstream<char> &f) ;
     void Read(std::filesystem::path path);
     static void checkHeader(std::filesystem::path path) ;
-    static void checkInformationHeader(std::ifstream &f, const unsigned char *informationheader) ;
     void readColor(std::ifstream &f, int paddingamount);
     [[nodiscard]] Color GetColor(int x, int y) const;
     void Export2(std::ofstream &j,std::filesystem::path SRC, int paddingamount, int filesize);

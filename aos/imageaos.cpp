@@ -354,7 +354,15 @@ void Image::Read(std::filesystem::path path) {
     f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
     checkHeader(path); // Comprobamos que la cabecera sea correcta llamando a la funcion checkHeader
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
-    checkInformationHeader(f, informationheader);  // Restricción para que el fichero pueda ser válido
+    if(informationheader[14] != 24 || // tamaño de cada punto == 24 bits
+       informationheader[12] != 1 || // # planos == 1
+       informationheader[16] != 0 || // valor compresión == 0
+       informationheader[17] != 0 || // valor compresión == 0
+       informationheader[18] != 0 || // valor compresión == 0
+       informationheader[19] != 0){
+        cerr << "El formato BMP no es válido " << endl;
+        f.close();
+    }
     int offset = fileheader[10] + (fileheader[11]<<8) + (fileheader[12]<<16) + (fileheader[13]<<24);
     f.seekg(offset,std::ios_base ::beg);
     //Anchura en px de la imagen (Comprende desde el byte 18-21)
@@ -378,7 +386,15 @@ void Image::Read2(std::filesystem::path path) {
     f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
     checkHeader(path); // Comprobamos que la cabecera sea correcta llamando a la funcion checkHeader
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
-    checkInformationHeader(f, informationheader);  // Restricción para que el fichero pueda ser válido
+    if(informationheader[14] != 24 || // tamaño de cada punto == 24 bits
+       informationheader[12] != 1 || // # planos == 1
+       informationheader[16] != 0 || // valor compresión == 0
+       informationheader[17] != 0 || // valor compresión == 0
+       informationheader[18] != 0 || // valor compresión == 0
+       informationheader[19] != 0){
+        cerr << "El formato BMP no es válido " << endl;
+        f.close();
+    }
     int offset = fileheader[10] + (fileheader[11]<<8) + (fileheader[12]<<16) + (fileheader[13]<<24);
     f.seekg(offset,std::ios_base ::beg);
     //Anchura en px de la imagen (Comprende desde el byte 18-21)
@@ -415,20 +431,6 @@ void Image::readColor(ifstream &f, const int paddingamount) {
 }
 
 
-void Image::checkInformationHeader(ifstream &f, const unsigned char *informationheader) {
-    /* Función que comprueba si el archivo es de tipo BMP considerando en número de planos, el tamaño de cada punto
-     * y el valor de compresión */
-
-    if(informationheader[14] != 24 || // tamaño de cada punto == 24 bits
-       informationheader[12] != 1 || // # planos == 1
-       informationheader[16] != 0 || // valor compresión == 0
-       informationheader[17] != 0 || // valor compresión == 0
-       informationheader[18] != 0 || // valor compresión == 0
-       informationheader[19] != 0){
-        cerr << "El formato BMP no es válido " << endl;
-        f.close();
-    }
-}
 
 
 void Image::checkHeader(std::filesystem::path SRC) {
