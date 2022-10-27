@@ -50,7 +50,6 @@ private:
     void Gray_calculations(std::ifstream &f, const int paddingamount);
     void Gray_open_create_files(std::filesystem::path &SRC, const std::filesystem::path &DST, std::ifstream &f, std::ofstream &j) const;
     float Gray_formula(float nr, float ng, float nb, float cr, float cg, float cb) const;
-    void Gray_intensidad_lineal(float nr, float ng, float nb, float &cr, float &cg, float &cb) const;
 
     /*GAUSS*/
 
