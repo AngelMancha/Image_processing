@@ -154,7 +154,7 @@ void ImageSoa::GrayScale(std::filesystem::path SRC, std::filesystem::path DST) {
     operacion = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
     /*Exportamos el archivo al fichero de salida*/
     start = std::chrono::high_resolution_clock::now();
-    Export2(j, fileheader, informationheader, paddingamount, filesize);
+    Export2(j, SRC, paddingamount, filesize);
     end = std::chrono::high_resolution_clock::now();
     store = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
@@ -350,8 +350,15 @@ float ImageSoa::GetColorBlue(int x, int y) const {
     return colores.m_b[y*m_width+x];
 }
 
-void ImageSoa::Export2(ofstream &j, unsigned char *fileheader, unsigned char *informationheader, const int paddingamount,
-                       const int filesize) const {
+void ImageSoa::Export2(ofstream &j, std::filesystem::path SRC, const int paddingamount, const int filesize) {
+
+    unsigned char fileheader[fileheadersize];
+    unsigned char informationheader[informationheadersize];
+
+    std::ifstream f;
+    f.open(SRC, ios::in | ios::binary);
+    f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
+    f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
 
     unsigned char bmpPad[3] = {0, 0, 0};
     fileheader[2] = filesize;
@@ -421,7 +428,7 @@ void ImageSoa::GaussianBlur(std::filesystem::path SRC, std::filesystem::path DST
     operacion = chrono::duration_cast<chrono::milliseconds>(end - start).count();
     /*Exportamos el archivo al fichero de salida*/
     start = chrono::steady_clock::now();
-    Export2(j, fileheader, informationheader, paddingamount, filesize);
+    Export2(j, SRC, paddingamount, filesize);
     end = chrono::steady_clock::now();
     store = chrono::duration_cast<chrono::milliseconds>(end - start).count();
 }

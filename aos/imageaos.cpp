@@ -166,7 +166,7 @@ void Image::GrayScale(std::filesystem::path SRC, std::filesystem::path DST) {
     operacion=chrono::duration_cast<chrono::microseconds>(end - start).count();
     /*Exportamos el archivo al fichero de salida*/
     start = chrono::steady_clock::now();
-    Export2(j, fileheader, informationheader, paddingamount, filesize);
+    Export2(j, SRC, paddingamount, filesize);
     end = chrono::steady_clock::now();
     store=chrono::duration_cast<chrono::microseconds>(end - start).count();
 }
@@ -266,7 +266,7 @@ void Image::GaussianBlur(std::filesystem::path SRC, std::filesystem::path DST) {
     operacion=chrono::duration_cast<chrono::microseconds>(end - start).count();
     /*Exportamos el archivo al fichero de salida*/
     start = chrono::steady_clock::now();
-    Export2(j, fileheader, informationheader, paddingamount, filesize);
+    Export2(j, SRC, paddingamount, filesize);
     end = chrono::steady_clock::now();
     store=chrono::duration_cast<chrono::microseconds>(end - start).count();
 }
@@ -465,8 +465,16 @@ Color Image::GetColor(int x, int y) const {
 }
 
 
-void Image::Export2(ofstream &j, unsigned char *fileheader, unsigned char *informationheader, const int paddingamount,
-                    const int filesize) const {
+void Image::Export2(ofstream &j, std::filesystem::path SRC, const int paddingamount, const int filesize)  {
+
+
+    unsigned char fileheader[fileheadersize];
+    unsigned char informationheader[informationheadersize];
+
+    std::ifstream f;
+    f.open(SRC, ios::in | ios::binary);
+    f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
+    f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
 
     unsigned char bmpPad[3] = {0, 0, 0};
     fileheader[2] = filesize;

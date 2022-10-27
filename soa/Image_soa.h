@@ -28,7 +28,7 @@ public:
     void GaussianBlur(std::filesystem::path SRC, std::filesystem::path DST);
     void Copy(std::filesystem::path SRC, std::filesystem::path DEST);
     void GrayScale(std::filesystem::path SRC, std::filesystem::path DST);
-    void Export2(std::ofstream &j, unsigned char *fileheader, unsigned char *informationheader, int paddingamount, int filesize) const;
+    void Export2(std::ofstream &j,std::filesystem::path SRC, int paddingamount, int filesize) ;
     void Histograma(std::filesystem::path SRC, std::filesystem::path DST);
     //Elegir funcion
     static int funcion(std::vector<std::filesystem::path> paths, std::filesystem::path outpath, std::string operation);
