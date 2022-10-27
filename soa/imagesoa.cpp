@@ -126,15 +126,17 @@ void ImageSoa::Histo_get_intensities(ifstream &f) {
     }
     f.close();
 }
-
+/*La función GrayScale se encarga de convertir a ecala de grises la imagaen original:
+ * Primero lee el archivo original y crea el archivo destino.
+ * Después lee la imagen para así poder rellenar los parámetros de ancho, alto y la
+ * estructura de colores.
+ * Posteriormente se llama a la función que se encarga de modificar los colores de cada pyxel
+ * Y por último se escriben los nuevos colores en la imagen de destinol*/
 void ImageSoa::GrayScale(std::filesystem::path SRC, std::filesystem::path DST) {
-    /*we open the input and output files*/
     auto start = std::chrono::high_resolution_clock::now();
     std::ifstream f;
     std::ofstream j;
     Gray_open_create_files(SRC, DST, f, j);
-
-    /*Leemos el archivo para así obtener el ancho, alto y el vector de colores*/
     ImageSoa::Read2(SRC);
     unsigned char fileheader[fileheadersize];
     unsigned char informationheader[informationheadersize];
@@ -146,20 +148,18 @@ void ImageSoa::GrayScale(std::filesystem::path SRC, std::filesystem::path DST) {
     f.seekg(offset,std::ios_base ::beg);
     auto end = std::chrono::high_resolution_clock::now();
     load = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-    /*Procedemos a realizar los cálculos pertinentes para la conversion a escala de grises*/
     start = std::chrono::high_resolution_clock::now();
     Gray_calculations(f, paddingamount);
     f.close();
     end = std::chrono::high_resolution_clock::now();
     operacion = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-    /*Exportamos el archivo al fichero de salida*/
     start = std::chrono::high_resolution_clock::now();
     Export2(j, SRC, paddingamount, filesize);
     end = std::chrono::high_resolution_clock::now();
     store = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-
 }
 
+/*Esta función se encarga de crear los arhcivos destino en el directorio destino*/
 void ImageSoa::Gray_open_create_files(filesystem::path &SRC, const filesystem::path &DST, ifstream &f, ofstream &j) const {
     openFilein(SRC, f);
     string new_name= "mono_" + (SRC.filename()).string();
@@ -167,6 +167,7 @@ void ImageSoa::Gray_open_create_files(filesystem::path &SRC, const filesystem::p
     openFileout(target, j);
 }
 
+/*En esta función se llevan a cabo los pasos para la conversión a escala de grises.*/
 void ImageSoa::Gray_calculations(ifstream &f, const int paddingamount) {
     for (int y = 0; y < m_height; y++){
         for (int x = 0; x < m_width; x++) {
@@ -189,6 +190,11 @@ void ImageSoa::Gray_calculations(ifstream &f, const int paddingamount) {
 
         f.ignore(paddingamount);}}
 
+/*Esta función contiene la fórmula para la conversión a la escala de grises:
+ * Primero: se procede con la transformación a intensidad lineal
+ * Segundo: se procede con la transformación lineal
+ * Tercero: se procede con la corrección gamma*/
+
 float ImageSoa::Gray_formula(float nr, float ng, float nb, float cr, float cg, float cb) const {
     // 1. Transformación a intensidad lineal
     Gray_intensidad_lineal(nr, ng, nb, cr, cg, cb);
@@ -203,8 +209,9 @@ float ImageSoa::Gray_formula(float nr, float ng, float nb, float cr, float cg, f
     return cg;
 }
 
+/*Esta función implementa únicamente el paso 1 de la anterior función para así poder
+ * hacer la transformación lineal a cada uno de los colores*/
 void ImageSoa::Gray_intensidad_lineal(float nr, float ng, float nb, float &cr, float &cg, float &cb) const {
-    /*Aplicamos la transformación lineal a cada uno de los colores*/
     // Rojo
     if ( nr <= 0.04045){
         cr = nr/12.92;}
@@ -222,18 +229,10 @@ void ImageSoa::Gray_intensidad_lineal(float nr, float ng, float nb, float &cr, f
         cb = nb/12.92;}
     if (nb > 0.04045){
         float aux = ((nb+0.055)/1.055);
-        cb = pow(aux, 2.4);}
-
+        cb = pow(aux, 2.4);
+    }
 }
 
-/*
-Colores ImageSoa::get_Color_vector() {
-    Colores color_aux;
-
-    memcpy(&color_aux, &colores);
-    return color_aux;
-}
- */
 
 
 void ImageSoa::Read(std::filesystem::path path) {
@@ -327,6 +326,15 @@ void ImageSoa::openFilein(std::filesystem::path path, ifstream &f) {
         exit(-1);
     }
 }
+
+void ImageSoa::openFileout(std::filesystem::path path, ofstream &f) {
+    f.open(path.generic_string(), ios::out | ios::binary);
+    //f.open(path, ios::out | ios::binary);
+    if(!f.is_open()){
+        cout << "El fichero no pudo ser abierto" << endl;
+        exit(-1);
+    }
+}
 float ImageSoa::GetColorRed(int x, int y) const {
     return colores.m_r[y*m_width+x];
 }
@@ -372,31 +380,23 @@ void ImageSoa::Export2(ofstream &j, std::filesystem::path SRC, const int padding
     j.close();
 }
 
-void ImageSoa::openFileout(std::filesystem::path path, ofstream &f) {
-    f.open(path.generic_string(), ios::out | ios::binary);
-    //f.open(path, ios::out | ios::binary);
-    if(!f.is_open()){
-        cout << "El fichero no pudo ser abierto" << endl;
-        exit(-1);
-    }
-}
 
-void ImageSoa::Gauss_open_create_files(filesystem::path &SRC, const filesystem::path &DST, ifstream &f, ofstream &j) const {
-    openFilein(SRC, f);/*Escribimos el nombre con el que queremos que se guarde el fichero de salida en el directorio destino*/
-    string new_name="gauss_"+(SRC.filename()).string();
-    auto target = DST/new_name;
-    openFileout(target, j);
-}
 
+
+/*La función GaussianBlur se encarga de difuminar una imagen
+ * Primero lee el archivo de origen y posteriormente crea el archivo destino para
+ * Después crea tres vectores auxiliares en los que va a guardar los 3 colores.
+ * De esta forma se consigue que los valores para los píxeles no se sobreescriban
+ * Posteriormente llamamos a la función que se encarga de realizar las modificaciones gausianas
+ * Y finalmente escribimos los valores nuevos con la función export.
+ * */
 
 void ImageSoa::GaussianBlur(std::filesystem::path SRC, std::filesystem::path DST) {
     auto start = chrono::steady_clock::now();
     std::ifstream f;
     std::ofstream j;
     Gauss_open_create_files(SRC, DST, f, j);
-    /*Leemos el archivo para así obtener el ancho, alto y el vector de colores*/
     ImageSoa::Read(SRC);
-
     unsigned char fileheader[fileheadersize];
     unsigned char informationheader[informationheadersize];
     const int paddingamount = ((4 - (m_width * 3) % 4) % 4);
@@ -406,7 +406,6 @@ void ImageSoa::GaussianBlur(std::filesystem::path SRC, std::filesystem::path DST
     auto end = chrono::steady_clock::now();
     load = chrono::duration_cast<chrono::milliseconds>(end - start).count();
     start = chrono::steady_clock::now();
-    /*Inicializamos 3 vectores auxiliares para guardar los colores*/
     vector<float> color_aux_red;
     vector<float> color_aux_green;
     vector<float> color_aux_blue;
@@ -415,17 +414,40 @@ void ImageSoa::GaussianBlur(std::filesystem::path SRC, std::filesystem::path DST
     f.close();
     end = chrono::steady_clock::now();
     operacion = chrono::duration_cast<chrono::milliseconds>(end - start).count();
-    /*Exportamos el archivo al fichero de salida*/
     start = chrono::steady_clock::now();
     Export2(j, SRC, paddingamount, filesize);
     end = chrono::steady_clock::now();
     store = chrono::duration_cast<chrono::milliseconds>(end - start).count();
 }
 
+/*Esta función genera el archivo destino*/
+void ImageSoa::Gauss_open_create_files(filesystem::path &SRC, const filesystem::path &DST, ifstream &f, ofstream &j) const {
+    openFilein(SRC, f);/*Escribimos el nombre con el que queremos que se guarde el fichero de salida en el directorio destino*/
+    string new_name="gauss_"+(SRC.filename()).string();
+    auto target = DST/new_name;
+    openFileout(target, j);
+}
+
+/*Esta función se encarga de generar 3 vectores auxiliares para cada uno de los colores
+ * a partir de la estructura de arrays original para los colores*/
+
+void ImageSoa::gauss_aux_vector(vector<float> &color_aux_red, vector<float> &color_aux_green,
+                                vector<float> &color_aux_blue) {
+    for (unsigned long long i=0; i < colores.m_r.size(); i++) {
+        color_aux_red.push_back(colores.m_r[i]);
+    }
+    for (unsigned long long i=0; i < colores.m_g.size(); i++) {
+        color_aux_green.push_back(colores.m_g[i]);
+    }
+    for (unsigned long long i=0; i < colores.m_b.size(); i++) {
+        color_aux_blue.push_back(colores.m_b[i]);
+    }
+}
+
+/*gauss_calculations recorre pyxel por pyxel y realiza a cada vector de colores del pyxel la modificación
+ * pertinente*/
 void ImageSoa::gauss_calculations(ifstream &f, const int paddingamount, const vector<float> &color_aux_red,
                                   const vector<float> &color_aux_green, const vector<float> &color_aux_blue) {
-
-
 
     for (int y =0; y < m_height; y++) {
         for (int pyxel = 0; pyxel < m_width; pyxel++) {
@@ -433,10 +455,8 @@ void ImageSoa::gauss_calculations(ifstream &f, const int paddingamount, const ve
             float final_cg = 0;
             float final_cb = 0;
 
-            gauss_pyxeles_alrededor(color_aux_red, color_aux_green, color_aux_blue, y, pyxel, final_cr, final_cg,
-                                    final_cb);/*sumatorio_s*/
-            /*metemos los colores finales en el vector m_colors*/
-            //cout << "The color is blabalabkansaonsiabd" <<final_cr << endl;
+            gauss_pyxeles_alrededor(color_aux_red, color_aux_green, color_aux_blue, y, pyxel, final_cr, final_cg, final_cb);
+
             colores.m_r[y * m_width + pyxel] = final_cr / 273;
             colores.m_g[y * m_width + pyxel] = final_cg / 273;
             colores.m_b[y * m_width + pyxel] = final_cb / 273;
@@ -445,33 +465,33 @@ void ImageSoa::gauss_calculations(ifstream &f, const int paddingamount, const ve
     }
 }
 
+/*gauss_pyxeles_alrededor se ejecuta en cada pyxel de la imagen original, y en cada ejecución
+ * almacena los valores de los 25 píxeles que hay alrededor del pyxel central que se quiere difuminar.
+ * Por lo que va sumando en 3 variables pertenecientes a cada color el valor correspoondiente tras haber
+ * aplicado la fórmula de la difusión gausiana y cuando llega a 25 sumas para la ejecución
+ * */
 void ImageSoa::gauss_pyxeles_alrededor(const vector<float> &color_aux_red, const vector<float> &color_aux_green,
                                        const vector<float> &color_aux_blue, int y, int pyxel, float &final_cr,
                                        float &final_cg, float &final_cb) const {
     for (int sumatorio_s = -2; sumatorio_s < 3; sumatorio_s++) {
         for (int sumatorio_t=-2; sumatorio_t < 3; sumatorio_t++) {
-
-            /*Controlamos que el pyxel no esté fuera de los límites de la imagen.
-             * De ser así, asignamos 0 a las variables de los colores*/
             if ((pyxel + sumatorio_s > m_width) or (pyxel + sumatorio_s < 0) or (y + sumatorio_t > m_height) or (y + sumatorio_t < 0)) {
 
                 final_cr = final_cr + 0;
                 final_cg = final_cg + 0;
                 final_cb = final_cb + 0;
-
             }
-                /*cogemos el color del pyxel que está en la posición x = pyxel + sumatorio_s y la posición y = y + sumatorio_t)*/
+
             else {
                 gauss_formula(color_aux_red, color_aux_green, color_aux_blue, y, pyxel, sumatorio_s,
                               sumatorio_t, final_cr, final_cg, final_cb);
-
-
             }
-
-        } /*loop sumatorio_t*/
+        }
     }
 }
 
+/*gauss_formula implementa la formula necesaria para realizar los cambios a difusión gausiana,
+ * y para ello utiliza la máscara proporcionada*/
 void ImageSoa::gauss_formula(const vector<float> &color_aux_red, const vector<float> &color_aux_green,
                              const vector<float> &color_aux_blue, int y, int pyxel, int sumatorio_s, int sumatorio_t,
                              float &final_cr, float &final_cg, float &final_cb) const {
@@ -485,32 +505,16 @@ void ImageSoa::gauss_formula(const vector<float> &color_aux_red, const vector<fl
     float ng = (color_aux_green[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s]);
     float nb = (color_aux_blue[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s]);
 
-
-    /*Calculamos el color para uno de los 25 pixeles que está alrededor del pyxel (x,y) */
-    //cout << "valor de la mascara es" << mascara[sumatorio_s + 2][sumatorio_t + 2] << endl;
     float cr = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  nr;
     float cg = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  ng;
     float cb = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  nb;
 
-    /*le sumamos a la variable que va a recopilar la suma de todos los colores de los 25 pyxeles*/
     final_cr = final_cr + cr;
     final_cg = final_cg + cg;
     final_cb = final_cb + cb;
 }
 
-void
-ImageSoa::gauss_aux_vector(vector<float> &color_aux_red, vector<float> &color_aux_green,
-                           vector<float> &color_aux_blue) {
-    for (unsigned long long i=0; i < colores.m_r.size(); i++) {
-        color_aux_red.push_back(colores.m_r[i]);
-    }
-    for (unsigned long long i=0; i < colores.m_g.size(); i++) {
-        color_aux_green.push_back(colores.m_g[i]);
-    }
-    for (unsigned long long i=0; i < colores.m_b.size(); i++) {
-        color_aux_blue.push_back(colores.m_b[i]);
-    }
-}
+
 
 int ImageSoa::funcion(std::vector<std::filesystem::path> paths, std::filesystem::path outpath, std::string op) {
     for (const auto &path: paths)
