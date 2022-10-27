@@ -12,6 +12,6 @@ int main(int argc, char *argv[]) {
     archivosBMP = getImgPaths(argv[1]);
 
     //ahora ejecutar funcion, seguramente tenga que comprobar algo de errores
-    Image::funcion(archivosBMP, static_cast<std::string>(argv[2]), static_cast<std::string>(argv[3]));
+    ImageAos::funcion(archivosBMP, static_cast<std::string>(argv[2]), static_cast<std::string>(argv[3]));
 
 }
