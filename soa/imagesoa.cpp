@@ -19,7 +19,7 @@ parametros::parametros() : r(0), g(0), b(0) {}
 parametros::parametros(float r, float g, float b): r(r), g(g), b(b) {}
 parametros::~parametros()= default;
 //
-ImageSoa::ImageSoa(int width, int height): m_width(width), m_height(height) {}
+ImageSoa::ImageSoa(int width, int height): ancho_img(width), alto_img(height) {}
 ImageSoa::~ImageSoa() = default;
 
 void ImageSoa::Copy(std::filesystem::path SRC, std::filesystem::path DEST) {
@@ -55,11 +55,11 @@ void ImageSoa::Histograma(std::filesystem::path SRC, std::filesystem::path DST){
 
     unsigned char informationheader[informationheadersize];
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
-    m_width = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
-    m_height = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
-    colores.m_r.resize(m_width*m_height);
-    colores.m_g.resize(m_width*m_height);
-    colores.m_b.resize(m_width*m_height);
+    ancho_img = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
+    alto_img = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
+    colores.m_r.resize(ancho_img * alto_img);
+    colores.m_g.resize(ancho_img * alto_img);
+    colores.m_b.resize(ancho_img * alto_img);
     auto end = std::chrono::high_resolution_clock::now();
     load = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
     start = std::chrono::high_resolution_clock::now();
@@ -100,7 +100,7 @@ void ImageSoa::Histo_create_output(const filesystem::path &SRC, const filesystem
 void ImageSoa::Histo_count_ocurrencies(vector<int> &r_colors, vector<int> &g_colors, vector<int> &b_colors) {
     int r,g,b;
     //recorremos nuestra matriz de colores para rellenar nuestras listas de ocurrencias
-    for(int i=0; i < m_width * m_height; ++i){
+    for(int i=0; i < ancho_img * alto_img; ++i){
         //aumentamos en uno el valor de la posicion (de la lista) que coincide con la intensidad del pixel rojo
         r= colores.m_r[i];
         r_colors[r]+=1;
@@ -114,22 +114,23 @@ void ImageSoa::Histo_count_ocurrencies(vector<int> &r_colors, vector<int> &g_col
 }
 
 void ImageSoa::Histo_get_intensities(ifstream &f) {
-    const int paddingamount = ((4 - (m_width * 3) % 4) % 4);
+    const int paddingamount = ((4 - (ancho_img * 3) % 4) % 4);
     //matriz de colores
-    for (int y = 0; y < m_height; y++){
-        for (int x = 0; x < m_width; x++) {
+    for (int y = 0; y < alto_img; y++){
+        for (int x = 0; x < ancho_img; x++) {
             unsigned char color[3];
             f.read(reinterpret_cast<char*>(color),3);
 
-            colores.m_r[y * m_width + x] = color[2];
-            colores.m_g[y * m_width + x] = color[1];
-            colores.m_b[y * m_width + x] = color[0];
+            colores.m_r[y * ancho_img + x] = color[2];
+            colores.m_g[y * ancho_img + x] = color[1];
+            colores.m_b[y * ancho_img + x] = color[0];
 
         }
         f.ignore(paddingamount);
     }
     f.close();
 }
+
 /*La función GrayScale se encarga de convertir a ecala de grises la imagaen original:
  * Primero lee el archivo original y crea el archivo destino.
  * Después lee la imagen para así poder rellenar los parámetros de ancho, alto y la
@@ -144,8 +145,8 @@ void ImageSoa::GrayScale(std::filesystem::path SRC, std::filesystem::path DST) {
     ImageSoa::Read2(SRC);
     unsigned char fileheader[fileheadersize];
     unsigned char informationheader[informationheadersize];
-    const int paddingamount = ((4-(m_width*3)%4)%4);
-    const int filesize = fileheadersize + informationheadersize + m_width * m_height * 3 + paddingamount * m_height;
+    const int paddingamount = ((4- (ancho_img * 3) % 4) % 4);
+    const int filesize = fileheadersize + informationheadersize + ancho_img * alto_img * 3 + paddingamount * alto_img;
     f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
     int offset = fileheader[10] + (fileheader[11]<<8) + (fileheader[12]<<16) + (fileheader[13]<<24);
@@ -153,7 +154,9 @@ void ImageSoa::GrayScale(std::filesystem::path SRC, std::filesystem::path DST) {
     auto end = std::chrono::high_resolution_clock::now();
     load = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
     start = std::chrono::high_resolution_clock::now();
+
     Gray_calculations(f, paddingamount);
+
     f.close();
     end = std::chrono::high_resolution_clock::now();
     operacion = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
@@ -173,8 +176,8 @@ void ImageSoa::Gray_open_create_files(filesystem::path &SRC, const filesystem::p
 
 /*En esta función se llevan a cabo los pasos para la conversión a escala de grises.*/
 void ImageSoa::Gray_calculations(ifstream &f, const int paddingamount) {
-    for (int y = 0; y < m_height; y++){
-        for (int x = 0; x < m_width; x++) {
+    for (int y = 0; y < alto_img; y++){
+        for (int x = 0; x < ancho_img; x++) {
             unsigned char color[3];
             /*Primero extraemos los colores del vector y los guardamos en variables normalizándolos*/
             f.read(reinterpret_cast<char*>(color),3);
@@ -186,10 +189,10 @@ void ImageSoa::Gray_calculations(ifstream &f, const int paddingamount) {
 
 
             /* Y por último asignamos a los 3 componentes del vector de colores el mismo valor*/
-            colores.m_r[y * m_width + x] = c.g;
+            colores.m_r[y * ancho_img + x] = c.g;
 
-            colores.m_g[y * m_width + x] = c.g;
-            colores.m_b[y * m_width + x] = c.g;}
+            colores.m_g[y * ancho_img + x] = c.g;
+            colores.m_b[y * ancho_img + x] = c.g;}
 
         f.ignore(paddingamount);}}
 
@@ -242,155 +245,6 @@ parametros &ImageSoa::Gray_intensidad(float nr, float ng, float nb, parametros &
 
 
 
-
-void ImageSoa::Read(std::filesystem::path path) {
-    std::ifstream f;
-    openFilein(path, f);
-    unsigned char fileheader[fileheadersize];
-    unsigned char informationheader[informationheadersize];
-    f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
-    checkHeader(path); // Comprobamos que la cabecera sea correcta llamando a la funcion checkHeader
-    f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
-    if(informationheader[14] != 24 || informationheader[12] != 1 ||
-       informationheader[16] != 0 || informationheader[17] != 0 ||
-       informationheader[18] != 0 || informationheader[19] != 0){
-        cerr << "El formato BMP no es válido " << endl;
-        f.close();
-    }
-    int offset = fileheader[10] + (fileheader[11]<<8) + (fileheader[12]<<16) + (fileheader[13]<<24);
-    f.seekg(offset,std::ios_base ::beg);
-    m_width = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
-    m_height = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
-    colores.m_r.resize(m_width*m_height);
-    colores.m_b.resize(m_width*m_height);
-    colores.m_g.resize(m_width*m_height);
-    const int paddingamount = ((4-(m_width*3)%4)%4);
-    readColor(f, paddingamount);
-    f.close();
-}
-
-void ImageSoa::Read2(std::filesystem::path path) {
-    std::ifstream f;
-    openFilein(path, f);
-    unsigned char fileheader[fileheadersize];
-    unsigned char informationheader[informationheadersize];
-    f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
-    checkHeader(path);
-    f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
-    if(informationheader[14] != 24 || informationheader[12] != 1 ||
-       informationheader[16] != 0 || informationheader[17] != 0 ||
-       informationheader[18] != 0 || informationheader[19] != 0){
-        cerr << "El formato BMP no es válido " << endl;
-        f.close();
-    }
-    int offset = fileheader[10] + (fileheader[11]<<8) + (fileheader[12]<<16) + (fileheader[13]<<24);
-    f.seekg(offset,std::ios_base ::beg);
-    m_width = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
-    m_height = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
-    colores.m_r.resize(m_width*m_height);
-    colores.m_b.resize(m_width*m_height);
-    colores.m_g.resize(m_width*m_height);
-    f.close();
-}
-
-
-void ImageSoa::readColor(ifstream &f, const int paddingamount) {
-    /* Esta función lee el color de cada píxel y lo guarda dentro del array de estructuras definido para los colores
-     * (m_colors)*/
-    for (int y = 0; y < m_height; y++){
-        for (int x = 0; x < m_width; x++) {
-            unsigned char color[3];
-            f.read(reinterpret_cast<char*>(color),3);
-            colores.m_r[y * m_width + x] = static_cast<float>(color[2]) / 255.0f;
-            colores.m_g[y * m_width + x] = static_cast<float>(color[1]) / 255.0f;
-            colores.m_b[y * m_width + x] = static_cast<float>(color[0]) / 255.0f;
-        }
-        f.ignore(paddingamount);
-    }
-}
-
-
-
-void ImageSoa::checkHeader(std::filesystem::path SRC) {
-    /* Esta función comprueba si el archivo es un BMP, en el caso que no lo sea escribe una salida de error indicando
-     * que el archivo adjuntado no es un BMP */
-    unsigned char fileheader[fileheadersize];
-    std::ifstream f;
-    f.open(SRC, ios::in | ios::binary);
-    f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
-
-    if(fileheader[0] != 'B' || fileheader[1] != 'M'){
-        cerr << "El archivo no es de tipo BMP " << endl;
-        f.close();
-    }
-}
-
-
-void ImageSoa::openFilein(std::filesystem::path path, ifstream &f) {
-    /* function to open the image and see if there is an error */
-    f.open(path, ios::in | ios::binary);
-    if(!f.is_open()){
-        cout << "El fichero no pudo ser abierto" << endl;
-        exit(-1);
-    }
-}
-
-void ImageSoa::openFileout(std::filesystem::path path, ofstream &f) {
-    f.open(path.generic_string(), ios::out | ios::binary);
-    //f.open(path, ios::out | ios::binary);
-    if(!f.is_open()){
-        cout << "El fichero no pudo ser abierto" << endl;
-        exit(-1);
-    }
-}
-float ImageSoa::GetColorRed(int x, int y) const {
-    return colores.m_r[y*m_width+x];
-}
-
-float ImageSoa::GetColorGreen(int x, int y) const {
-    return colores.m_g[y*m_width+x];
-}
-
-float ImageSoa::GetColorBlue(int x, int y) const {
-    return colores.m_b[y*m_width+x];
-}
-
-void ImageSoa::Export2(ofstream &j, std::filesystem::path SRC, const int paddingamount, const int filesize) {
-
-    unsigned char fileheader[fileheadersize];
-    unsigned char informationheader[informationheadersize];
-
-    std::ifstream f;
-    f.open(SRC, ios::in | ios::binary);
-    f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
-    f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
-
-    unsigned char bmpPad[3] = {0, 0, 0};
-    fileheader[2] = filesize;
-    fileheader[10] = fileheadersize + informationheadersize;
-    j.write(reinterpret_cast<char *>(fileheader), fileheadersize);
-
-    informationheader[0] = informationheadersize;
-    j.write(reinterpret_cast<char *>(informationheader), informationheadersize);
-
-    for (int y = 0; y < m_height; y++) {
-        for (int x = 0; x < m_width; x++) {
-            unsigned char r = static_cast<unsigned char>(GetColorRed(x,y) * 255.0f);
-            unsigned char g = static_cast<unsigned char>(GetColorGreen(x,y) * 255.0f);
-            unsigned char b = static_cast<unsigned char>(GetColorBlue(x,y) * 255.0f);
-
-            unsigned char color[] = {b, g, r};
-            j.write(reinterpret_cast<char *>(color), 3);
-        }
-        j.write(reinterpret_cast<char *>(bmpPad), paddingamount);
-    }
-
-    j.close();
-}
-
-
-
-
 /*La función GaussianBlur se encarga de difuminar una imagen
  * Primero lee el archivo de origen y posteriormente crea el archivo destino para
  * Después crea tres vectores auxiliares en los que va a guardar los 3 colores.
@@ -407,17 +261,17 @@ void ImageSoa::GaussianBlur(std::filesystem::path SRC, std::filesystem::path DST
     ImageSoa::Read(SRC);
     unsigned char fileheader[fileheadersize];
     unsigned char informationheader[informationheadersize];
-    const int paddingamount = ((4 - (m_width * 3) % 4) % 4);
-    const int filesize = fileheadersize + informationheadersize + m_width * m_height * 3 + paddingamount * m_height;
+    const int paddingamount = ((4 - (ancho_img * 3) % 4) % 4);
+    const int filesize = fileheadersize + informationheadersize + ancho_img * alto_img * 3 + paddingamount * alto_img;
     f.read(reinterpret_cast<char *>(fileheader), fileheadersize);
     f.read(reinterpret_cast<char *>(informationheader), informationheadersize);
     auto end = chrono::steady_clock::now();
     load = chrono::duration_cast<chrono::milliseconds>(end - start).count();
     start = chrono::steady_clock::now();
 
-    Colores color_aux = Gray_auxiliarvector();
+    Colores color_aux = Gauss_auxiliarvector();
 
-    Gray_Calculations(f, paddingamount, color_aux);
+    Gauss_Calculations(f, paddingamount, color_aux);
 
     f.close();
     end = chrono::steady_clock::now();
@@ -428,7 +282,8 @@ void ImageSoa::GaussianBlur(std::filesystem::path SRC, std::filesystem::path DST
     store = chrono::duration_cast<chrono::milliseconds>(end - start).count();
 }
 
-Colores ImageSoa::Gray_auxiliarvector() {
+/*Esta función crea una estructura auxiliar en la que guardar los colores*/
+Colores ImageSoa::Gauss_auxiliarvector() {
     Colores color_aux;
 
     for (unsigned long long i=0; i < colores.m_r.size(); i++) {
@@ -439,39 +294,45 @@ Colores ImageSoa::Gray_auxiliarvector() {
     return color_aux;
 }
 
-void ImageSoa::Gray_Calculations(ifstream &f, const int paddingamount, const Colores &color_aux) {
-    for (int y =0; y < m_height; y++) {
-        for (int pyxel = 0; pyxel < m_width; pyxel++) {
+/*Esta función es la encargada de obtener pixel por pixel el valor deseado para su difuminación llamando
+ * a la función gauss_operatons y después guarda los valores deseados en la estructura de colores
+ * */
+void ImageSoa::Gauss_Calculations(ifstream &f, const int paddingamount, const Colores &color_aux) {
+    for (int y =0; y < alto_img; y++) {
+        for (int pyxel = 0; pyxel < ancho_img; pyxel++) {
 
             parametros final;
             final.r=0;
             final.g=0;
             final.b=0;
 
-            final = Gray_operations(color_aux, y, pyxel, final);
+            final = Gauss_operations(color_aux, y, pyxel, final);
 
-            colores.m_r[y * m_width + pyxel] = final.r / 273;
-            colores.m_g[y * m_width + pyxel] = final.g / 273;
-            colores.m_b[y * m_width + pyxel] = final.b / 273;
+            colores.m_r[y * ancho_img + pyxel] = final.r / 273;
+            colores.m_g[y * ancho_img + pyxel] = final.g / 273;
+            colores.m_b[y * ancho_img + pyxel] = final.b / 273;
         }
         f.ignore(paddingamount);
     }
 }
 
-parametros &ImageSoa::Gray_operations(const Colores &color_aux, int y, int pyxel, parametros &final) const {
+/*Esta función implementa la fórmula final para aplicarla en cada uno de los 25 pixeles de alrededor
+ * al pixel central*/
+parametros &ImageSoa::Gauss_operations(const Colores &color_aux, int y, int pyxel, parametros &final) const {
     for (int sumatorio_s = -2; sumatorio_s < 3; sumatorio_s++) {
         for (int sumatorio_t=-2; sumatorio_t < 3; sumatorio_t++) {
-            if ((pyxel + sumatorio_s > m_width) or (pyxel + sumatorio_s < 0) or (y + sumatorio_t > m_height) or (y + sumatorio_t < 0)) {
-
+            /*En el caso de que uno de los 25 pixeles que rodean al pixel central esté fuera de los límites, se le asigna un valor de 0 */
+            if ((pyxel + sumatorio_s > ancho_img) or (pyxel + sumatorio_s < 0) or (y + sumatorio_t > alto_img) or (y + sumatorio_t < 0)) {
                 final.r = final.r + 0;
                 final.g = final.g + 0;
-                final.b = final.b + 0;
-            }
+                final.b = final.b + 0;}
+            /*de lo contrario se multiplica el valor correspondiente por la máscara y se suma el resultado a la correspondiente variable final que
+             * recopila la suma de los 25 pixeles*/
             else {
                 int mascara[5][5] = {{1, 4,  7,  4,  1},{4, 16, 26, 16, 4},{7, 26, 41, 26, 7},{4, 16, 26, 16, 4},{1, 4,  7,  4,  1}};
-                float nr = (color_aux.m_r[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s]);
-                float ng = (color_aux.m_g[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s]);
-                float nb = (color_aux.m_b[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s]);
+                float nr = (color_aux.m_r[((y + sumatorio_t) * ancho_img) + pyxel + sumatorio_s]);
+                float ng = (color_aux.m_g[((y + sumatorio_t) * ancho_img) + pyxel + sumatorio_s]);
+                float nb = (color_aux.m_b[((y + sumatorio_t) * ancho_img) + pyxel + sumatorio_s]);
 
                 float cr = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  nr;
                 float cg = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  ng;
@@ -494,11 +355,163 @@ void ImageSoa::Gauss_open_create_files(filesystem::path &SRC, const filesystem::
     openFileout(target, j);
 }
 
-/*Esta función se encarga de generar 3 vectores auxiliares para cada uno de los colores
- * a partir de la estructura de arrays original para los colores*/
+/* Esta función lee una imagen y comprueba que todos los campos de la cabecera sean correctos y guarda en la clase
+ * ImageSoa los valores para ancho_img, alto_img y vector_colores */
+void ImageSoa::Read(std::filesystem::path path) {
+    std::ifstream f;
+    openFilein(path, f);
+    unsigned char fileheader[fileheadersize];
+    unsigned char informationheader[informationheadersize];
+    f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
+    checkHeader(path); // Comprobamos que la cabecera sea correcta llamando a la funcion checkHeader
+    f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
+    if(informationheader[14] != 24 || informationheader[12] != 1 ||
+       informationheader[16] != 0 || informationheader[17] != 0 ||
+       informationheader[18] != 0 || informationheader[19] != 0){
+        cerr << "El formato BMP no es válido " << endl;
+        f.close();
+    }
+    int offset = fileheader[10] + (fileheader[11]<<8) + (fileheader[12]<<16) + (fileheader[13]<<24);
+    f.seekg(offset,std::ios_base ::beg);
+    //Anchura en px de la imagen (Comprende desde el byte 18-21)
+    ancho_img = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
+    //Altura en px de la imagen (Comprende desde el byte 22-25)
+    alto_img = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
+    colores.m_r.resize(ancho_img * alto_img);
+    colores.m_b.resize(ancho_img * alto_img);
+    colores.m_g.resize(ancho_img * alto_img);
+    const int paddingamount = ((4- (ancho_img * 3) % 4) % 4);
+    readColor(f, paddingamount);
+    f.close();
+}
+
+/* Esta función lee una imagen y comprueba que todos los campos de la cabecera sean correctos y guarda en la clase
+ * ImageSoa los valores para ancho_img, alto_img y vector_colores */
+void ImageSoa::Read2(std::filesystem::path path) {
+    std::ifstream f;
+    openFilein(path, f);
+    unsigned char fileheader[fileheadersize];
+    unsigned char informationheader[informationheadersize];
+    f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
+    checkHeader(path);
+    f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
+    if(informationheader[14] != 24 || informationheader[12] != 1 ||
+       informationheader[16] != 0 || informationheader[17] != 0 ||
+       informationheader[18] != 0 || informationheader[19] != 0){
+        cerr << "El formato BMP no es válido " << endl;
+        f.close();
+    }
+    int offset = fileheader[10] + (fileheader[11]<<8) + (fileheader[12]<<16) + (fileheader[13]<<24);
+    f.seekg(offset,std::ios_base ::beg);
+    ancho_img = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
+    alto_img = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
+    colores.m_r.resize(ancho_img * alto_img);
+    colores.m_b.resize(ancho_img * alto_img);
+    colores.m_g.resize(ancho_img * alto_img);
+    f.close();
+}
+
+
+void ImageSoa::readColor(ifstream &f, const int paddingamount) {
+    /* Esta función lee el color de cada píxel y lo guarda dentro del array de estructuras definido para los colores
+     * (m_colors)*/
+    for (int y = 0; y < alto_img; y++){
+        for (int x = 0; x < ancho_img; x++) {
+            unsigned char color[3];
+            f.read(reinterpret_cast<char*>(color),3);
+            colores.m_r[y * ancho_img + x] = static_cast<float>(color[2]) / 255.0f;
+            colores.m_g[y * ancho_img + x] = static_cast<float>(color[1]) / 255.0f;
+            colores.m_b[y * ancho_img + x] = static_cast<float>(color[0]) / 255.0f;
+        }
+        f.ignore(paddingamount);
+    }
+}
 
 
 
+void ImageSoa::checkHeader(std::filesystem::path SRC) {
+    /* Esta función comprueba si el archivo es un BMP, en el caso que no lo sea escribe una salida de error indicando
+     * que el archivo adjuntado no es un BMP */
+    unsigned char fileheader[fileheadersize];
+    std::ifstream f;
+    f.open(SRC, ios::in | ios::binary);
+    f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
+
+    if(fileheader[0] != 'B' || fileheader[1] != 'M'){
+        cerr << "El archivo no es de tipo BMP " << endl;
+        f.close();
+    }
+}
+
+
+void ImageSoa::Export2(ofstream &j, std::filesystem::path SRC, const int paddingamount, const int filesize) {
+
+    unsigned char fileheader[fileheadersize];
+    unsigned char informationheader[informationheadersize];
+
+    std::ifstream f;
+    f.open(SRC, ios::in | ios::binary);
+    f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
+    f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
+
+    unsigned char bmpPad[3] = {0, 0, 0};
+    fileheader[2] = filesize;
+    fileheader[10] = fileheadersize + informationheadersize;
+    j.write(reinterpret_cast<char *>(fileheader), fileheadersize);
+
+    informationheader[0] = informationheadersize;
+    j.write(reinterpret_cast<char *>(informationheader), informationheadersize);
+
+    for (int y = 0; y < alto_img; y++) {
+        for (int x = 0; x < ancho_img; x++) {
+            unsigned char r = static_cast<unsigned char>(GetColorRed(x,y) * 255.0f);
+            unsigned char g = static_cast<unsigned char>(GetColorGreen(x,y) * 255.0f);
+            unsigned char b = static_cast<unsigned char>(GetColorBlue(x,y) * 255.0f);
+
+            unsigned char color[] = {b, g, r};
+            j.write(reinterpret_cast<char *>(color), 3);
+        }
+        j.write(reinterpret_cast<char *>(bmpPad), paddingamount);
+    }
+
+    j.close();
+}
+
+void ImageSoa::openFilein(std::filesystem::path path, ifstream &f) {
+    /* función para abrir el archivo origen y ver si hay algún error*/
+    f.open(path, ios::in | ios::binary);
+    if(!f.is_open()){
+        cout << "El fichero no pudo ser abierto" << endl;
+        exit(-1);
+    }
+}
+
+void ImageSoa::openFileout(std::filesystem::path path, ofstream &f) {
+    /* función para abrir el archivo destino y ver si hay algún error */
+    f.open(path.generic_string(), ios::out | ios::binary);
+    if(!f.is_open()){
+        cout << "El fichero no pudo ser abierto" << endl;
+        exit(-1);
+    }
+}
+float ImageSoa::GetColorRed(int x, int y) const {
+    return colores.m_r[y * ancho_img + x];
+}
+
+float ImageSoa::GetColorGreen(int x, int y) const {
+    return colores.m_g[y * ancho_img + x];
+}
+
+float ImageSoa::GetColorBlue(int x, int y) const {
+    return colores.m_b[y * ancho_img + x];
+}
+
+
+
+
+
+/*Esta función es llamada por el main del ejecutable de Soa cuando recibe como argumento en nombre de
+ * la función que hay que ejecutar (copy, histo, mono, o gauss*/
 int ImageSoa::funcion(std::vector<std::filesystem::path> paths, std::filesystem::path outpath, std::string op) {
     for (const auto &path: paths)
     {

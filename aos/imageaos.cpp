@@ -211,6 +211,11 @@ void ImageAos::Gray_calculations(ifstream &f, const int paddingamount) {
     }
 }
 
+/*Esta función contiene la fórmula para la conversión a la escala de grises:
+* Primero: se procede con la transformación a intensidad lineal
+* Segundo: se procede con la transformación lineal
+* Tercero: se procede con la corrección gamma*/
+
 Color &ImageAos::Gray_operations(float nr, float ng, float nb, Color &c) const {// 1. Transformación a intensidad lineal
 /*Aplicamos la transformación lineal a cada uno de los colores*/Gray_intensidad(nr, ng, nb, c);
 
@@ -223,6 +228,9 @@ Color &ImageAos::Gray_operations(float nr, float ng, float nb, Color &c) const {
         c.g = 1.055 * pow(cl, (1/2.4)) - 0.055;}
     return c;
 }
+
+/*Esta función implementa únicamente el paso 1 de la anterior función para así poder
+ * hacer la transformación lineal a cada uno de los colores*/
 
 void ImageAos::Gray_intensidad(float nr, float ng, float nb, Color &c) const {// Rojo
     if ( nr <= 0.04045){
@@ -286,7 +294,9 @@ void ImageAos::Gauss_open_create_files(filesystem::path &SRC, const filesystem::
 }
 
 
-// Se encarga de hacer las operaciones necesarias para difuminar la imagen.
+/*Esta función es la encargada de obtener pixel por pixel el valor deseado para su difuminación llamando
+ * a la función gauss_operatons y después guarda los valores deseados en la estructura de colores
+ */
 void ImageAos::Gauss_calculations(ifstream &f, const int paddingamount, const vector<Color> &color_aux) {
     for (int y =0; y < alto_img; y++) {
         for (int pyxel = 0; pyxel < ancho_img; pyxel++) {
@@ -300,6 +310,8 @@ void ImageAos::Gauss_calculations(ifstream &f, const int paddingamount, const ve
     }
 }
 
+/*Esta función implementa la fórmula final para aplicarla en cada uno de los 25 pixeles de alrededor
+ * al pixel central*/
 Color ImageAos::Gauss_operations(const vector<Color> &color_aux, int y, int pyxel) const {
     Color final;
     final.r=0;
@@ -310,8 +322,7 @@ Color ImageAos::Gauss_operations(const vector<Color> &color_aux, int y, int pyxe
             if ((pyxel + sumatorio_s > ancho_img) or (pyxel + sumatorio_s < 0) or (y + sumatorio_t > alto_img) or (y + sumatorio_t < 0)) {
                 final.r = final.r + 0;
                 final.g = final.g + 0;
-                final.b = final.b + 0;
-            }
+                final.b = final.b + 0;}
             else {
                 int mascara[5][5] = {{1, 4,  7,  4,  1},{4, 16, 26, 16, 4},{7, 26, 41, 26, 7},{4, 16, 26, 16, 4},{1, 4,  7,  4,  1}};
                 float nr = (color_aux[((y + sumatorio_t) * ancho_img) + pyxel + sumatorio_s].r);
@@ -321,11 +332,9 @@ Color ImageAos::Gauss_operations(const vector<Color> &color_aux, int y, int pyxe
                 float cr = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  nr;
                 float cg = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  ng;
                 float cb = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  nb;
-
                 final.r = final.r + cr;
                 final.g = final.g + cg;
-                final.b = final.b + cb;
-            }
+                final.b = final.b + cb;}
         }
     }
     return final;
@@ -333,9 +342,9 @@ Color ImageAos::Gauss_operations(const vector<Color> &color_aux, int y, int pyxe
 
 /* Funciones privadas*/
 
+/* Esta función lee una imagen y comprueba que todos los campos de la cabecera sean correctos y guarda en la clase
+ * ImageSoa los valores para ancho_img, alto_img y vector_colores */
 void ImageAos::Read(std::filesystem::path path) {
-    /* Esta función lee una imagen y comprueba que todos los campos de la cabecera sean correctos y guarda en la clase
-     * ImageSoa los valores para ancho_img, alto_img y vector_colores */
     std::ifstream f;
     openFilein(path, f);
     // Definimos 2 arrays que contienen la cabecera y la información de cabecera y hacemos comprobaciones
@@ -356,15 +365,16 @@ void ImageAos::Read(std::filesystem::path path) {
     ancho_img = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
     //Altura en px de la imagen (Comprende desde el byte 22-25)
     alto_img = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
+    //Se llena el vector de colores
     vector_colores.resize(ancho_img * alto_img);
     const int paddingamount = ((4- (ancho_img * 3) % 4) % 4);
     readColor(f, paddingamount);
     f.close();
 }
 
+/* Esta función lee una imagen y comprueba que todos los campos de la cabecera sean correctos y guarda en la clase
+ * ImageSoa los valores para ancho_img, alto_img y vector_colores */
 void ImageAos::Read2(std::filesystem::path path) {
-    /* Esta función lee una imagen y comprueba que todos los campos de la cabecera sean correctos y guarda en la clase
-     * ImageSoa los valores para ancho_img, alto_img y vector_colores */
     std::ifstream f;
     openFilein(path, f);
     // Definimos 2 arrays que contienen la cabecera y la información de cabecera y hacemos comprobaciones
@@ -385,6 +395,7 @@ void ImageAos::Read2(std::filesystem::path path) {
     ancho_img = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
     //Altura en px de la imagen (Comprende desde el byte 22-25)
     alto_img = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
+    //se llena el vector de colores
     vector_colores.resize(ancho_img * alto_img);
     const int paddingamount = ((4- (ancho_img * 3) % 4) % 4);
     readColor(f, paddingamount);
@@ -431,30 +442,6 @@ void ImageAos::checkHeader(std::filesystem::path SRC) {
     }
 }
 
-void ImageAos::openFilein(std::filesystem::path path, ifstream &f) {
-    /* function to open the image and see if there is an error */
-    f.open(path.generic_string(), ios::in | ios::binary);
-    if(!f.is_open()){
-        cout << "El fichero no pudo ser abierto" << endl;
-        exit(-1);
-    }
-}
-
-void ImageAos::openFileout(std::filesystem::path path, ofstream &f) {
-    /* function to open the image and see if there is an error */
-    f.open(path.generic_string(), ios::out | ios::binary);
-    if(!f.is_open()){
-        cout << "El fichero no pudo ser abierto" << endl;
-        exit(-1);
-    }
-}
-
-
-Color ImageAos::GetColor(int x, int y) const {
-    return vector_colores[y * ancho_img + x];
-}
-
-
 void ImageAos::Export2(ofstream &j, std::filesystem::path SRC, const int paddingamount, const int filesize)  {
 
 
@@ -488,6 +475,30 @@ void ImageAos::Export2(ofstream &j, std::filesystem::path SRC, const int padding
 
     j.close();
 }
+
+void ImageAos::openFilein(std::filesystem::path path, ifstream &f) {
+    /* función para abrir el archivo origen y ver si hay algún error*/
+    f.open(path.generic_string(), ios::in | ios::binary);
+    if(!f.is_open()){
+        cout << "El fichero no pudo ser abierto" << endl;
+        exit(-1);
+    }
+}
+
+void ImageAos::openFileout(std::filesystem::path path, ofstream &f) {
+    /* función para abrir el archivo destino y ver si hay algún error */
+    f.open(path.generic_string(), ios::out | ios::binary);
+    if(!f.is_open()){
+        cout << "El fichero no pudo ser abierto" << endl;
+        exit(-1);
+    }
+}
+
+
+Color ImageAos::GetColor(int x, int y) const {
+    return vector_colores[y * ancho_img + x];
+}
+
 
 /*Esta función es llamada por el main del ejecutable de Aos cuando recibe como argumento en nombre de
  * la función que hay que ejecutar (copy, histo, mono, o gauss*/
