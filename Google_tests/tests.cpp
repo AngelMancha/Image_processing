@@ -1,12 +1,9 @@
+/*
 #include "gtest/gtest.h"
 #include "../aos/Image_aos.h"
 #include <filesystem>
 using namespace std;
 
-int main(int argc, char *argv[]) {
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}
 
 TEST(copia, amphora) {
     std::string path = std::filesystem::current_path().remove_filename().generic_string();
@@ -22,7 +19,6 @@ TEST(copia, amphora) {
 
 }
 
-/*
 TEST(copia, amphora2) {
     std::string path = std::filesystem::current_path().remove_filename().generic_string();
     const std::filesystem::path orignial = path + "input\\amphora.bmp";
@@ -36,6 +32,6 @@ TEST(copia, amphora2) {
         EXPECT_EQ(copia.vector_colores[x].r,original.vector_colores[x].r);
         EXPECT_EQ(copia.vector_colores[x].b,original.vector_colores[x].b);
         EXPECT_EQ(copia.vector_colores[x].g,original.vector_colores[x].g);
-        }
+    }
 }
 */
