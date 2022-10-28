@@ -77,7 +77,6 @@ void ImageSoa::Histograma(std::filesystem::path SRC, std::filesystem::path DST){
     Histo_create_output(SRC, DST, r_colors, g_colors, b_colors);
     end = std::chrono::high_resolution_clock::now();
     store = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-
 }
 
 void ImageSoa::Histo_create_output(const filesystem::path &SRC, const filesystem::path &DST, const vector<int> &r_colors,
@@ -340,8 +339,7 @@ parametros &ImageSoa::Gauss_operations(const Colores &color_aux, int y, int pyxe
 
                 final.r = final.r + cr;
                 final.g = final.g + cg;
-                final.b = final.b + cb;
-            }
+                final.b = final.b + cb;}
         }
     }
     return final;
@@ -445,35 +443,28 @@ void ImageSoa::checkHeader(std::filesystem::path SRC) {
 
 
 void ImageSoa::Export2(ofstream &j, std::filesystem::path SRC, const int paddingamount, const int filesize) {
-
     unsigned char fileheader[fileheadersize];
     unsigned char informationheader[informationheadersize];
-
     std::ifstream f;
     f.open(SRC, ios::in | ios::binary);
     f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
-
     unsigned char bmpPad[3] = {0, 0, 0};
     fileheader[2] = filesize;
     fileheader[10] = fileheadersize + informationheadersize;
     j.write(reinterpret_cast<char *>(fileheader), fileheadersize);
-
     informationheader[0] = informationheadersize;
     j.write(reinterpret_cast<char *>(informationheader), informationheadersize);
-
     for (int y = 0; y < alto_img; y++) {
         for (int x = 0; x < ancho_img; x++) {
             unsigned char r = static_cast<unsigned char>(GetColorRed(x,y) * 255.0f);
             unsigned char g = static_cast<unsigned char>(GetColorGreen(x,y) * 255.0f);
             unsigned char b = static_cast<unsigned char>(GetColorBlue(x,y) * 255.0f);
-
             unsigned char color[] = {b, g, r};
             j.write(reinterpret_cast<char *>(color), 3);
         }
         j.write(reinterpret_cast<char *>(bmpPad), paddingamount);
     }
-
     j.close();
 }
 
@@ -519,14 +510,11 @@ int ImageSoa::funcion(std::vector<std::filesystem::path> paths, std::filesystem:
             ImageSoa copia(0, 0);
             copia.Copy(path, outpath);
             tiempo_ejecucion(copia.load,copia.store,copia.operacion,path,outpath,op);
-
         }
-
         if(op=="mono"){
             ImageSoa mono(0, 0);
             mono.GrayScale(path, outpath);
             tiempo_ejecucion(mono.load,mono.store,mono.operacion,path,outpath,op);
-
         }
         if(op=="histo") {
             ImageSoa histo(0, 0);
@@ -537,11 +525,8 @@ int ImageSoa::funcion(std::vector<std::filesystem::path> paths, std::filesystem:
             ImageSoa gauss(0, 0);
             gauss.GaussianBlur(path, outpath);
             tiempo_ejecucion(gauss.load,gauss.store,gauss.operacion,path,outpath,op);
-
         }
-
     }
     return 0;
-
 }
 

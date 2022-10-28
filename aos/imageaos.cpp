@@ -77,7 +77,6 @@ void ImageAos::Histograma(std::filesystem::path SRC, std::filesystem::path DST){
     std::vector<int> r_colors(256);
     std::vector<int> g_colors(256);
     std::vector<int> b_colors(256);
-
     Histo_count_ocurrencies(r_colors, g_colors, b_colors);
     end = chrono::steady_clock::now();
     operacion=chrono::duration_cast<chrono::microseconds>(end - start).count();
@@ -443,24 +442,18 @@ void ImageAos::checkHeader(std::filesystem::path SRC) {
 }
 
 void ImageAos::Export2(ofstream &j, std::filesystem::path SRC, const int paddingamount, const int filesize)  {
-
-
     unsigned char fileheader[fileheadersize];
     unsigned char informationheader[informationheadersize];
-
     std::ifstream f;
     f.open(SRC, ios::in | ios::binary);
     f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
-
     unsigned char bmpPad[3] = {0, 0, 0};
     fileheader[2] = filesize;
     fileheader[10] = fileheadersize + informationheadersize;
     j.write(reinterpret_cast<char *>(fileheader), fileheadersize);
-
     informationheader[0] = informationheadersize;
     j.write(reinterpret_cast<char *>(informationheader), informationheadersize);
-
     for (int y = 0; y < alto_img; y++) {
         for (int x = 0; x < ancho_img; x++) {
             unsigned char r = static_cast<unsigned char>(GetColor(x, y).r * 255.0f);
@@ -472,7 +465,6 @@ void ImageAos::Export2(ofstream &j, std::filesystem::path SRC, const int padding
         }
         j.write(reinterpret_cast<char *>(bmpPad), paddingamount);
     }
-
     j.close();
 }
 
@@ -509,14 +501,11 @@ int ImageAos::funcion(std::vector<std::filesystem::path> paths, std::filesystem:
             ImageAos copia(0, 0);
             copia.Copy(path, outpath);
             tiempo_ejecucion(copia.load,copia.store,copia.operacion,path,outpath,op);
-
         }
-
         if(op=="mono"){
             ImageAos mono(0, 0);
             mono.GrayScale(path, outpath);
             tiempo_ejecucion(mono.load,mono.store,mono.operacion,path,outpath,op);
-
         }
         if(op=="histo") {
             ImageAos histo(0, 0);
@@ -527,11 +516,7 @@ int ImageAos::funcion(std::vector<std::filesystem::path> paths, std::filesystem:
             ImageAos gauss(0, 0);
             gauss.GaussianBlur(path, outpath);
             tiempo_ejecucion(gauss.load,gauss.store,gauss.operacion,path,outpath,op);
-
         }
-
-
     }
     return 0;
-
 }
