@@ -17,6 +17,14 @@ struct Colores{
     ~Colores();
 };
 
+struct parametros{
+    float r,g,b;
+    parametros();
+    parametros(float r, float g, float b);
+    ~parametros();
+};
+
+
 class ImageSoa{
 public:
     ImageSoa(int width, int height); // constructor de la clase
@@ -49,7 +57,6 @@ private:
     /*GRAY*/
     void Gray_calculations(std::ifstream &f, const int paddingamount);
     void Gray_open_create_files(std::filesystem::path &SRC, const std::filesystem::path &DST, std::ifstream &f, std::ofstream &j) const;
-    float Gray_formula(float nr, float ng, float nb, float cr, float cg, float cb) const;
 
     /*GAUSS*/
 
@@ -85,4 +92,7 @@ private:
     void Histo_get_intensities(std::ifstream &f);
 
 
+    parametros Gray_operations(float nr, float ng, float nb) const;
+
+    parametros &Gray_intensidad(float nr, float ng, float nb, parametros &c) const;
 };

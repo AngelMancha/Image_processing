@@ -14,6 +14,10 @@ Colores::Colores() : m_r(0), m_g(0), m_b(0) {}
 Colores::Colores(std::vector<float> m_r, std::vector<float> m_g, std::vector<float> m_b): m_r(std::move(m_r)),m_g(std::move(m_g)),m_b(std::move(m_b)) {}
 Colores::~Colores()= default;
 
+/*Definimos una estructura de parámetros que usaremos de manaera auxiliar*/
+parametros::parametros() : r(0), g(0), b(0) {}
+parametros::parametros(float r, float g, float b): r(r), g(g), b(b) {}
+parametros::~parametros()= default;
 //
 ImageSoa::ImageSoa(int width, int height): m_width(width), m_height(height) {}
 ImageSoa::~ImageSoa() = default;
@@ -178,51 +182,65 @@ void ImageSoa::Gray_calculations(ifstream &f, const int paddingamount) {
             float ng = static_cast<float>(color[1])/255.0f;
             float nb= static_cast<float>(color[0])/255.0f;
             /*Después procedemos a ejecutar la fórmula para la conversión a escala de grises*/
-            float cr=0, cg=0, cb=0;
-            cg = Gray_formula(nr, ng, nb, cr, cg, cb);
+            parametros c = Gray_operations(nr, ng, nb);
+
 
             /* Y por último asignamos a los 3 componentes del vector de colores el mismo valor*/
-            colores.m_r[y * m_width + x] = cg;
+            colores.m_r[y * m_width + x] = c.g;
 
-            colores.m_g[y * m_width + x] = cg;
-            colores.m_b[y * m_width + x] = cg;}
+            colores.m_g[y * m_width + x] = c.g;
+            colores.m_b[y * m_width + x] = c.g;}
 
         f.ignore(paddingamount);}}
 
-/*Esta función contiene la fórmula para la conversión a la escala de grises:
- * Primero: se procede con la transformación a intensidad lineal
- * Segundo: se procede con la transformación lineal
- * Tercero: se procede con la corrección gamma*/
 
-float ImageSoa::Gray_formula(float nr, float ng, float nb, float cr, float cg, float cb) const {
+/*Esta función contiene la fórmula para la conversión a la escala de grises:
+* Primero: se procede con la transformación a intensidad lineal
+* Segundo: se procede con la transformación lineal
+* Tercero: se procede con la corrección gamma*/
+
+parametros ImageSoa::Gray_operations(float nr, float ng, float nb) const {
+    parametros c;
+    c.r=0;
+    c.g=0;
+    c.b=0;
     // 1. Transformación a intensidad lineal
-    if ( nr <= 0.04045){
-        cr = nr/12.92;}
-    if (nr > 0.04045){
-        float aux = ((nr+0.055)/1.055);
-        cr = pow(aux, 2.4);}
-    if ( ng <= 0.04045){
-        cg = nr/12.92;}
-    if (ng > 0.04045){
-        float aux = ((nr+0.055)/1.055);
-        cg = pow(aux, 2.4);}
-    if ( nb <= 0.04045){
-        cb = nb/12.92;}
-    if (nb > 0.04045){
-        float aux = ((nb+0.055)/1.055);
-        cb = pow(aux, 2.4);
-    }
-    float cl = 0.2126 * cr + 0.7152 * cg + 0.0722 * cb; //2.Transformación lineal
+    c = Gray_intensidad(nr, ng, nb, c);
+    //2.Transformación lineal
+    float cl = 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
+
     //3. Correción gamma
     if (cl <= 0.0031308){
-        cg = 12.92 * cl;}
+        c.g = 12.92 * cl;}
     if (cl > 0.0031308){
-        cg = 1.055 * pow(cl, (1/2.4)) - 0.055;}
-    return cg;
+        c.g = 1.055 * pow(cl, (1/2.4)) - 0.055;}
+    return c;
 }
+
 
 /*Esta función implementa únicamente el paso 1 de la anterior función para así poder
  * hacer la transformación lineal a cada uno de los colores*/
+parametros &ImageSoa::Gray_intensidad(float nr, float ng, float nb, parametros &c) const {
+    if (nr <= 0.04045){
+        c.r = nr/12.92;}
+    if (nr > 0.04045){
+        float aux = ((nr+0.055)/1.055);
+        c.r = pow(aux, 2.4);}
+    if ( ng <= 0.04045){
+        c.g = nr/12.92;}
+    if (ng > 0.04045){
+        float aux = ((nr+0.055)/1.055);
+        c.g = pow(aux, 2.4);}
+    if ( nb <= 0.04045){
+        c.b = nb/12.92;}
+    if (nb > 0.04045){
+        float aux = ((nb+0.055)/1.055);
+        c.b = pow(aux, 2.4);
+    }
+    return c;
+}
+
+
 
 
 void ImageSoa::Read(std::filesystem::path path) {

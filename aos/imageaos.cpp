@@ -22,8 +22,8 @@ Color::Color() : r(0), g(0), b(0) {}
 Color::Color(float r, float g, float b): r(r), g(g), b(b) {}
 Color::~Color()= default;
 
-Image::Image(int width, int height): m_width(width), m_height(height), m_colors(vector<Color>(width * height)) {}
-Image::~Image() = default;
+ImageAos::ImageAos(int width, int height): ancho_img(width), alto_img(height), vector_colores(vector<Color>(width * height)) {}
+ImageAos::~ImageAos() = default;
 
 /* Funciones públicas */
 
@@ -31,10 +31,10 @@ Image::~Image() = default;
 // Dentro de esta función llamamos a una función auxiliar Read que se encarga de hacer comprobaciones
 // para ver si el tipo de archivo que se va a manipular es el correcto
 // Una vez hecho eso se encargará de copìar la imagen de una carpeta origen a una carpeta destino
-void Image::Copy(std::filesystem::path SRC, std::filesystem::path DEST) {
+void ImageAos::Copy(std::filesystem::path SRC, std::filesystem::path DEST) {
     /* Esta función coge*/
     auto start = std::chrono::high_resolution_clock::now();
-    Image::Read(SRC);
+    ImageAos::Read(SRC);
     std::ifstream src(SRC, std::ios::binary);
     std::ofstream dest(DEST, std::ios::binary);
     std::string new_name="copia_"+(SRC.filename()).string();
@@ -58,7 +58,7 @@ void Image::Copy(std::filesystem::path SRC, std::filesystem::path DEST) {
 
 
 // Esta función genera un archivo de texto con el histograma de cada canal (RGB)
-void Image::Histograma(std::filesystem::path SRC, std::filesystem::path DST){
+void ImageAos::Histograma(std::filesystem::path SRC, std::filesystem::path DST){
     auto start = chrono::steady_clock::now();
     std::ifstream f;
     openFilein(SRC, f);
@@ -66,9 +66,9 @@ void Image::Histograma(std::filesystem::path SRC, std::filesystem::path DST){
     f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
     unsigned char informationheader[informationheadersize];
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
-    m_width = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
-    m_height = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
-    m_colors.resize(m_width*m_height);
+    ancho_img = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
+    alto_img = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
+    vector_colores.resize(ancho_img * alto_img);
     auto end = chrono::steady_clock::now();
     load=chrono::duration_cast<chrono::microseconds>(end - start).count();
     start = chrono::steady_clock::now();
@@ -85,11 +85,10 @@ void Image::Histograma(std::filesystem::path SRC, std::filesystem::path DST){
     Histo_create_output(SRC, DST, r_colors, g_colors, b_colors);
     end = chrono::steady_clock::now();
     store=chrono::duration_cast<chrono::microseconds>(end - start).count();
-
 }
 
-void Image::Histo_create_output(const filesystem::path &SRC, const filesystem::path &DST, const vector<int> &r_colors,
-                                const vector<int> &g_colors, const vector<int> &b_colors) const {
+void ImageAos::Histo_create_output(const filesystem::path &SRC, const filesystem::path &DST, const vector<int> &r_colors,
+                                   const vector<int> &g_colors, const vector<int> &b_colors) const {
     string new_name= "histo_" + (SRC.filename().replace_extension(".hst")).string();
     auto target = DST/new_name;
     ofstream output_file(target);
@@ -105,33 +104,33 @@ void Image::Histo_create_output(const filesystem::path &SRC, const filesystem::p
     output_file.close();
 }
 
-void Image::Histo_count_ocurrencies(vector<int> &r_colors, vector<int> &g_colors, vector<int> &b_colors) {
+void ImageAos::Histo_count_ocurrencies(vector<int> &r_colors, vector<int> &g_colors, vector<int> &b_colors) {
     int r,g,b;
     //recorremos nuestra matriz de colores para rellenar nuestras listas de ocurrencias
-    for(int i=0; i < m_width * m_height; ++i){
+    for(int i=0; i < ancho_img * alto_img; ++i){
         //aumentamos en uno el valor de la posicion (de la lista) que coincide con la intensidad del pixel rojo
-        r= m_colors[i].r;
+        r= vector_colores[i].r;
         r_colors[r]+=1;
         //aumentamos en uno el valor de la posicion (de la lista) que coincide con la intensidad del pixel verde
-        g= m_colors[i].g;
+        g= vector_colores[i].g;
         g_colors[g]+=1;
         //aumentamos en uno el valor de la posicion (de la lista) que coincide con la intensidad del pixel azul
-        b= m_colors[i].b;
+        b= vector_colores[i].b;
         b_colors[b]+=1;
     }
 }
 
-void Image::Histo_get_intensities(ifstream &f) {
-    const int paddingamount = ((4 - (m_width * 3) % 4) % 4);
+void ImageAos::Histo_get_intensities(ifstream &f) {
+    const int paddingamount = ((4 - (ancho_img * 3) % 4) % 4);
     //matriz de colores
-    for (int y = 0; y < m_height; y++){
-        for (int x = 0; x < m_width; x++) {
+    for (int y = 0; y < alto_img; y++){
+        for (int x = 0; x < ancho_img; x++) {
             unsigned char color[3];
             f.read(reinterpret_cast<char*>(color),3);
 
-            m_colors[y * m_width + x].r = color[2];
-            m_colors[y * m_width + x].g = color[1];
-            m_colors[y * m_width + x].b = color[0];
+            vector_colores[y * ancho_img + x].r = color[2];
+            vector_colores[y * ancho_img + x].g = color[1];
+            vector_colores[y * ancho_img + x].b = color[0];
 
         }
         f.ignore(paddingamount);
@@ -146,19 +145,19 @@ void Image::Histo_get_intensities(ifstream &f) {
 // Una vez hecho esto, llamará a la función gray_calculations que se encargará de realizar las operaciones
 // pertinentes. Cuando tengamos estas operaciones hechas, se encargará de exportar todos los cambios y crear una
 // nueva imagen que contenga los cambios con la funcion Export2.
-void Image::GrayScale(std::filesystem::path SRC, std::filesystem::path DST) {
+void ImageAos::GrayScale(std::filesystem::path SRC, std::filesystem::path DST) {
     auto start = chrono::steady_clock::now();
     std::ifstream f;
     std::ofstream j;
     Gray_open_create_files(SRC, DST, f, j);
-    Image::Read2(SRC);
+    ImageAos::Read2(SRC);
     auto end = chrono::steady_clock::now();
     load=chrono::duration_cast<chrono::microseconds>(end - start).count();
     start = chrono::steady_clock::now();
     unsigned char fileheader[fileheadersize];
     unsigned char informationheader[informationheadersize];
-    const int paddingamount = ((4-(m_width*3)%4)%4);
-    const int filesize = fileheadersize + informationheadersize + m_width * m_height * 3 + paddingamount * m_height;
+    const int paddingamount = ((4- (ancho_img * 3) % 4) % 4);
+    const int filesize = fileheadersize + informationheadersize + ancho_img * alto_img * 3 + paddingamount * alto_img;
     f.read(reinterpret_cast<char*>(fileheader), fileheadersize);
     f.read(reinterpret_cast<char*>(informationheader), informationheadersize);
     int offset = fileheader[10] + (fileheader[11]<<8) + (fileheader[12]<<16) + (fileheader[13]<<24);
@@ -175,7 +174,7 @@ void Image::GrayScale(std::filesystem::path SRC, std::filesystem::path DST) {
 
 
 // Función auxiliar de GrayScale que sirve para crear y nombrar las nuevas imágenes
-void Image::Gray_open_create_files(filesystem::path &SRC, const filesystem::path &DST, ifstream &f, ofstream &j) const {
+void ImageAos::Gray_open_create_files(filesystem::path &SRC, const filesystem::path &DST, ifstream &f, ofstream &j) const {
     openFilein(SRC, f);
     string new_name= "mono_" + (SRC.filename()).string();
     auto target = DST/new_name;
@@ -186,9 +185,9 @@ void Image::Gray_open_create_files(filesystem::path &SRC, const filesystem::path
 //Función auxiliar de GrayScale que se encarga de realizar las operaciones para poder convertir a escala de grises.
 // Primeeo extrae los colores del vector y los guarda en variables normalizándolos.
 // Una vez hecho esto se ejecuta la fórmula para la conversión a escala de grises usando la función gray_formula
-void Image::Gray_calculations(ifstream &f, const int paddingamount) {
-    for (int y = 0; y < m_height; y++){
-        for (int x = 0; x < m_width; x++) {
+void ImageAos::Gray_calculations(ifstream &f, const int paddingamount) {
+    for (int y = 0; y < alto_img; y++){
+        for (int x = 0; x < ancho_img; x++) {
             unsigned char color[3];
 
             f.read(reinterpret_cast<char*>(color),3);
@@ -205,14 +204,14 @@ void Image::Gray_calculations(ifstream &f, const int paddingamount) {
             c = Gray_operations(nr, ng, nb, c);
 
 
-            m_colors[y * m_width + x].r = c.g;
-            m_colors[y * m_width + x].g = c.g;
-            m_colors[y * m_width + x].b = c.g;}
+            vector_colores[y * ancho_img + x].r = c.g;
+            vector_colores[y * ancho_img + x].g = c.g;
+            vector_colores[y * ancho_img + x].b = c.g;}
         f.ignore(paddingamount);
     }
 }
 
-Color &Image::Gray_operations(float nr, float ng, float nb, Color &c) const {// 1. Transformación a intensidad lineal
+Color &ImageAos::Gray_operations(float nr, float ng, float nb, Color &c) const {// 1. Transformación a intensidad lineal
 /*Aplicamos la transformación lineal a cada uno de los colores*/Gray_intensidad(nr, ng, nb, c);
 
     //2.Transformación lineal
@@ -225,7 +224,7 @@ Color &Image::Gray_operations(float nr, float ng, float nb, Color &c) const {// 
     return c;
 }
 
-void Image::Gray_intensidad(float nr, float ng, float nb, Color &c) const {// Rojo
+void ImageAos::Gray_intensidad(float nr, float ng, float nb, Color &c) const {// Rojo
     if ( nr <= 0.04045){
         c.r = nr/12.92;}
     if (nr > 0.04045){
@@ -251,16 +250,16 @@ void Image::Gray_intensidad(float nr, float ng, float nb, Color &c) const {// Ro
 // Primero llama a la funcion read y despues llama a la funcion gauss_calculations que se encarga de hacer
 // las operaciones necesarias para difuminar la imagen. Despues llama a la función export2
 // que se encarga de realizar las operaciones para crear la imagen.
-void Image::GaussianBlur(std::filesystem::path SRC, std::filesystem::path DST) {
+void ImageAos::GaussianBlur(std::filesystem::path SRC, std::filesystem::path DST) {
     auto start = chrono::steady_clock::now();
     std::ifstream f;
     std::ofstream j;
     Gauss_open_create_files(SRC, DST, f, j);
-    Image::Read(SRC);
+    ImageAos::Read(SRC);
     unsigned char fileheader[fileheadersize];
     unsigned char informationheader[informationheadersize];
-    const int paddingamount = ((4 - (m_width * 3) % 4) % 4);
-    const int filesize = fileheadersize + informationheadersize + m_width * m_height * 3 + paddingamount * m_height;
+    const int paddingamount = ((4 - (ancho_img * 3) % 4) % 4);
+    const int filesize = fileheadersize + informationheadersize + ancho_img * alto_img * 3 + paddingamount * alto_img;
     f.read(reinterpret_cast<char *>(fileheader), fileheadersize);
     f.read(reinterpret_cast<char *>(informationheader), informationheadersize);
     auto end = chrono::steady_clock::now();
@@ -279,7 +278,7 @@ void Image::GaussianBlur(std::filesystem::path SRC, std::filesystem::path DST) {
 
 
 // Función auxiliar de GaussianBlur que sirve para crear y nombrar las nuevas imágenes
-void Image::Gauss_open_create_files(filesystem::path &SRC, const filesystem::path &DST, ifstream &f, ofstream &j) const {
+void ImageAos::Gauss_open_create_files(filesystem::path &SRC, const filesystem::path &DST, ifstream &f, ofstream &j) const {
     openFilein(SRC, f);/*Escribimos el nombre con el que queremos que se guarde el fichero de salida en el directorio destino*/
     string new_name="gauss_"+(SRC.filename()).string();
     auto target = DST/new_name;
@@ -288,36 +287,36 @@ void Image::Gauss_open_create_files(filesystem::path &SRC, const filesystem::pat
 
 
 // Se encarga de hacer las operaciones necesarias para difuminar la imagen.
-void Image::Gauss_calculations(ifstream &f, const int paddingamount, const vector<Color> &color_aux) {
-    for (int y =0; y < m_height; y++) {
-        for (int pyxel = 0; pyxel < m_width; pyxel++) {
+void ImageAos::Gauss_calculations(ifstream &f, const int paddingamount, const vector<Color> &color_aux) {
+    for (int y =0; y < alto_img; y++) {
+        for (int pyxel = 0; pyxel < ancho_img; pyxel++) {
 
             Color final = Gauss_operations(color_aux, y, pyxel);
-            m_colors[y * m_width + pyxel].r = final.r / 273;
-            m_colors[y * m_width + pyxel].g = final.g / 273;
-            m_colors[y * m_width + pyxel].b = final.b / 273;
+            vector_colores[y * ancho_img + pyxel].r = final.r / 273;
+            vector_colores[y * ancho_img + pyxel].g = final.g / 273;
+            vector_colores[y * ancho_img + pyxel].b = final.b / 273;
         }
         f.ignore(paddingamount);
     }
 }
 
-Color Image::Gauss_operations(const vector<Color> &color_aux, int y, int pyxel) const {
+Color ImageAos::Gauss_operations(const vector<Color> &color_aux, int y, int pyxel) const {
     Color final;
     final.r=0;
     final.g=0;
     final.b=0;
     for (int sumatorio_s = -2; sumatorio_s < 3; sumatorio_s++) {
         for (int sumatorio_t=-2; sumatorio_t < 3; sumatorio_t++) {
-            if ((pyxel + sumatorio_s > m_width) or (pyxel + sumatorio_s < 0) or (y + sumatorio_t > m_height) or (y + sumatorio_t < 0)) {
+            if ((pyxel + sumatorio_s > ancho_img) or (pyxel + sumatorio_s < 0) or (y + sumatorio_t > alto_img) or (y + sumatorio_t < 0)) {
                 final.r = final.r + 0;
                 final.g = final.g + 0;
                 final.b = final.b + 0;
             }
             else {
                 int mascara[5][5] = {{1, 4,  7,  4,  1},{4, 16, 26, 16, 4},{7, 26, 41, 26, 7},{4, 16, 26, 16, 4},{1, 4,  7,  4,  1}};
-                float nr = (color_aux[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s].r);
-                float ng = (color_aux[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s].g);
-                float nb = (color_aux[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s].b);
+                float nr = (color_aux[((y + sumatorio_t) * ancho_img) + pyxel + sumatorio_s].r);
+                float ng = (color_aux[((y + sumatorio_t) * ancho_img) + pyxel + sumatorio_s].g);
+                float nb = (color_aux[((y + sumatorio_t) * ancho_img) + pyxel + sumatorio_s].b);
 
                 float cr = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  nr;
                 float cg = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  ng;
@@ -334,9 +333,9 @@ Color Image::Gauss_operations(const vector<Color> &color_aux, int y, int pyxel) 
 
 /* Funciones privadas*/
 
-void Image::Read(std::filesystem::path path) {
+void ImageAos::Read(std::filesystem::path path) {
     /* Esta función lee una imagen y comprueba que todos los campos de la cabecera sean correctos y guarda en la clase
-     * ImageSoa los valores para m_width, m_height y m_colors */
+     * ImageSoa los valores para ancho_img, alto_img y vector_colores */
     std::ifstream f;
     openFilein(path, f);
     // Definimos 2 arrays que contienen la cabecera y la información de cabecera y hacemos comprobaciones
@@ -354,18 +353,18 @@ void Image::Read(std::filesystem::path path) {
     int offset = fileheader[10] + (fileheader[11]<<8) + (fileheader[12]<<16) + (fileheader[13]<<24);
     f.seekg(offset,std::ios_base ::beg);
     //Anchura en px de la imagen (Comprende desde el byte 18-21)
-    m_width = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
+    ancho_img = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
     //Altura en px de la imagen (Comprende desde el byte 22-25)
-    m_height = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
-    m_colors.resize(m_width*m_height);
-    const int paddingamount = ((4-(m_width*3)%4)%4);
+    alto_img = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
+    vector_colores.resize(ancho_img * alto_img);
+    const int paddingamount = ((4- (ancho_img * 3) % 4) % 4);
     readColor(f, paddingamount);
     f.close();
 }
 
-void Image::Read2(std::filesystem::path path) {
+void ImageAos::Read2(std::filesystem::path path) {
     /* Esta función lee una imagen y comprueba que todos los campos de la cabecera sean correctos y guarda en la clase
-     * ImageSoa los valores para m_width, m_height y m_colors */
+     * ImageSoa los valores para ancho_img, alto_img y vector_colores */
     std::ifstream f;
     openFilein(path, f);
     // Definimos 2 arrays que contienen la cabecera y la información de cabecera y hacemos comprobaciones
@@ -383,33 +382,33 @@ void Image::Read2(std::filesystem::path path) {
     int offset = fileheader[10] + (fileheader[11]<<8) + (fileheader[12]<<16) + (fileheader[13]<<24);
     f.seekg(offset,std::ios_base ::beg);
     //Anchura en px de la imagen (Comprende desde el byte 18-21)
-    m_width = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
+    ancho_img = informationheader[4] + (informationheader[5] << 8) + (informationheader[6] << 16) + (informationheader[7] << 24);
     //Altura en px de la imagen (Comprende desde el byte 22-25)
-    m_height = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
-    m_colors.resize(m_width*m_height);
-    const int paddingamount = ((4-(m_width*3)%4)%4);
+    alto_img = informationheader[8] + (informationheader[9] << 8) + (informationheader[10] << 16) + (informationheader[11] << 24);
+    vector_colores.resize(ancho_img * alto_img);
+    const int paddingamount = ((4- (ancho_img * 3) % 4) % 4);
     readColor(f, paddingamount);
     f.close();
 }
 
-vector<Color> Image::get_Color_vector() {
+vector<Color> ImageAos::get_Color_vector() {
     vector<Color>color_aux;
-    for (unsigned long long i=0; i < m_colors.size(); i++) {
-        color_aux.push_back(m_colors[i]);
+    for (unsigned long long i=0; i < vector_colores.size(); i++) {
+        color_aux.push_back(vector_colores[i]);
     }
     return color_aux;
 }
 
-void Image::readColor(ifstream &f, const int paddingamount) {
+void ImageAos::readColor(ifstream &f, const int paddingamount) {
     /* Esta función lee el color de cada píxel y lo guarda dentro del array de estructuras definido para los colores
-     * (m_colors)*/
-    for (int y = 0; y < m_height; y++){
-        for (int x = 0; x < m_width; x++) {
+     * (vector_colores)*/
+    for (int y = 0; y < alto_img; y++){
+        for (int x = 0; x < ancho_img; x++) {
             unsigned char color[3];
             f.read(reinterpret_cast<char*>(color),3);
-            m_colors[y * m_width + x].r = static_cast<float>(color[2]) / 255.0f;
-            m_colors[y * m_width + x].g = static_cast<float>(color[1]) / 255.0f;
-            m_colors[y * m_width + x].b = static_cast<float>(color[0]) / 255.0f;
+            vector_colores[y * ancho_img + x].r = static_cast<float>(color[2]) / 255.0f;
+            vector_colores[y * ancho_img + x].g = static_cast<float>(color[1]) / 255.0f;
+            vector_colores[y * ancho_img + x].b = static_cast<float>(color[0]) / 255.0f;
         }
         f.ignore(paddingamount);
     }
@@ -418,7 +417,7 @@ void Image::readColor(ifstream &f, const int paddingamount) {
 
 
 
-void Image::checkHeader(std::filesystem::path SRC) {
+void ImageAos::checkHeader(std::filesystem::path SRC) {
     /* Esta función comprueba si el archivo es un BMP, en el caso que no lo sea escribe una salida de error indicando
      * que el archivo adjuntado no es un BMP */
     unsigned char fileheader[fileheadersize];
@@ -432,7 +431,7 @@ void Image::checkHeader(std::filesystem::path SRC) {
     }
 }
 
-void Image::openFilein(std::filesystem::path path, ifstream &f) {
+void ImageAos::openFilein(std::filesystem::path path, ifstream &f) {
     /* function to open the image and see if there is an error */
     f.open(path.generic_string(), ios::in | ios::binary);
     if(!f.is_open()){
@@ -441,7 +440,7 @@ void Image::openFilein(std::filesystem::path path, ifstream &f) {
     }
 }
 
-void Image::openFileout(std::filesystem::path path, ofstream &f) {
+void ImageAos::openFileout(std::filesystem::path path, ofstream &f) {
     /* function to open the image and see if there is an error */
     f.open(path.generic_string(), ios::out | ios::binary);
     if(!f.is_open()){
@@ -451,12 +450,12 @@ void Image::openFileout(std::filesystem::path path, ofstream &f) {
 }
 
 
-Color Image::GetColor(int x, int y) const {
-    return m_colors[y*m_width+x];
+Color ImageAos::GetColor(int x, int y) const {
+    return vector_colores[y * ancho_img + x];
 }
 
 
-void Image::Export2(ofstream &j, std::filesystem::path SRC, const int paddingamount, const int filesize)  {
+void ImageAos::Export2(ofstream &j, std::filesystem::path SRC, const int paddingamount, const int filesize)  {
 
 
     unsigned char fileheader[fileheadersize];
@@ -475,8 +474,8 @@ void Image::Export2(ofstream &j, std::filesystem::path SRC, const int paddingamo
     informationheader[0] = informationheadersize;
     j.write(reinterpret_cast<char *>(informationheader), informationheadersize);
 
-    for (int y = 0; y < m_height; y++) {
-        for (int x = 0; x < m_width; x++) {
+    for (int y = 0; y < alto_img; y++) {
+        for (int x = 0; x < ancho_img; x++) {
             unsigned char r = static_cast<unsigned char>(GetColor(x, y).r * 255.0f);
             unsigned char g = static_cast<unsigned char>(GetColor(x, y).g * 255.0f);
             unsigned char b = static_cast<unsigned char>(GetColor(x, y).b * 255.0f);
@@ -490,29 +489,31 @@ void Image::Export2(ofstream &j, std::filesystem::path SRC, const int paddingamo
     j.close();
 }
 
-int Image::funcion(std::vector<std::filesystem::path> paths, std::filesystem::path outpath, std::string op) {
+/*Esta función es llamada por el main del ejecutable de Aos cuando recibe como argumento en nombre de
+ * la función que hay que ejecutar (copy, histo, mono, o gauss*/
+int ImageAos::funcion(std::vector<std::filesystem::path> paths, std::filesystem::path outpath, std::string op) {
     for (const auto &path: paths)
     {
         if(op=="copy"){
-            Image copia(0, 0);
+            ImageAos copia(0, 0);
             copia.Copy(path, outpath);
             tiempo_ejecucion(copia.load,copia.store,copia.operacion,path,outpath,op);
 
         }
 
         if(op=="mono"){
-            Image mono(0, 0);
+            ImageAos mono(0, 0);
             mono.GrayScale(path, outpath);
             tiempo_ejecucion(mono.load,mono.store,mono.operacion,path,outpath,op);
 
         }
         if(op=="histo") {
-            Image histo(0, 0);
+            ImageAos histo(0, 0);
             histo.Histograma(path, outpath);
             tiempo_ejecucion(histo.load,histo.store,histo.operacion,path,outpath,op);
         }
         if(op=="gauss"){
-            Image gauss(0, 0);
+            ImageAos gauss(0, 0);
             gauss.GaussianBlur(path, outpath);
             tiempo_ejecucion(gauss.load,gauss.store,gauss.operacion,path,outpath,op);
 

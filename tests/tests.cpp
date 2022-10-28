@@ -12,13 +12,13 @@ TEST(copia, amphora) {
     std::string path = std::filesystem::current_path().remove_filename().generic_string();
     const std::filesystem::path origin = path + "input\\amphora.bmp";
     const std::filesystem::path copiada = path + "output_aos\\copia_amphora.bmp";
-    Image copia(0,0);
+    ImageAos copia(0, 0);
     copia.Read(copiada);
-    Image original(0,0);
+    ImageAos original(0, 0);
     original.Read(origin);
 
-    EXPECT_EQ(copia.m_height,original.m_height);
-    EXPECT_EQ(copia.m_width,original.m_width);
+    EXPECT_EQ(copia.alto_img, original.alto_img);
+    EXPECT_EQ(copia.ancho_img, original.ancho_img);
 
 }
 
@@ -27,15 +27,15 @@ TEST(copia, amphora2) {
     std::string path = std::filesystem::current_path().remove_filename().generic_string();
     const std::filesystem::path orignial = path + "input\\amphora.bmp";
     const std::filesystem::path copiada = path + "output_aos\\copia_amphora.bmp";
-    Image copia(0,0);
+    ImageAos copia(0,0);
     copia.Read(orignial);
-    Image original(0,0);
+    ImageAos original(0,0);
     original.Read(copiada);
-    for (int x = 0; x<copia.m_height*copia.m_width; x++){
+    for (int x = 0; x<copia.alto_img*copia.ancho_img; x++){
 
-        EXPECT_EQ(copia.m_colors[x].r,original.m_colors[x].r);
-        EXPECT_EQ(copia.m_colors[x].b,original.m_colors[x].b);
-        EXPECT_EQ(copia.m_colors[x].g,original.m_colors[x].g);
+        EXPECT_EQ(copia.vector_colores[x].r,original.vector_colores[x].r);
+        EXPECT_EQ(copia.vector_colores[x].b,original.vector_colores[x].b);
+        EXPECT_EQ(copia.vector_colores[x].g,original.vector_colores[x].g);
         }
 }
 */
