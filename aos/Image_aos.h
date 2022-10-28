@@ -52,14 +52,14 @@ private:
     /*GRAY*/
     void Gray_calculations(std::ifstream &f, const int paddingamount);
     void Gray_open_create_files(std::filesystem::path &SRC, const std::filesystem::path &DST, std::ifstream &f, std::ofstream &j) const;
-    float Gray_formula(float nr, float ng, float nb, float cr, float cg, float cb) const;
-    void Gray_intensidad_lineal(float nr, float ng, float nb, float &cr, float &cg, float &cb) const;
+    Color &Gray_operations(float nr, float ng, float nb, Color &c) const;
+
+    void Gray_intensidad(float nr, float ng, float nb, Color &c) const;
     void Read2(std::filesystem::path path);
     /*GAUSS*/
     void Gauss_calculations(std::ifstream &f, const int paddingamount, const std::vector<Color> &color_aux); std::vector<Color> get_Color_vector();
     void Gauss_open_create_files(std::filesystem::path &SRC, const std::filesystem::path &DST, std::ifstream &f, std::ofstream &j) const;
-    void Gauss_pixeles_alrededor(const std::vector<Color> &color_aux, int y, int pyxel, float &final_cr, float &final_cg, float &final_cb) const;
-    void Gauss_formula(const std::vector<Color> &color_aux, int y, int pyxel, int sumatorio_s, int sumatorio_t, float &final_cr, float &final_cg, float &final_cb) const;
+    Color Gauss_operations(const std::vector<Color> &color_aux, int y, int pyxel) const;
     //HISTOGRAMA
     void Histo_count_ocurrencies(std::vector<int> &r_colors, std::vector<int> &g_colors, std::vector<int> &b_colors);
 
@@ -68,5 +68,6 @@ private:
                              const std::vector<int> &b_colors) const;
 
     void Histo_get_intensities(std::ifstream &f);
+
 
 };

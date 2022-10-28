@@ -196,58 +196,53 @@ void Image::Gray_calculations(ifstream &f, const int paddingamount) {
             float ng = static_cast<float>(color[1])/255.0f;
             float nb= static_cast<float>(color[0])/255.0f;
 
-            float cr=0, cg=0, cb=0;
-            cg = Gray_formula(nr, ng, nb, cr, cg, cb);
 
-            m_colors[y * m_width + x].r = cg;
-            m_colors[y * m_width + x].g = cg;
-            m_colors[y * m_width + x].b = cg;}
+
+            Color c;
+            c.r=0;
+            c.g=0;
+            c.b=0;
+            c = Gray_operations(nr, ng, nb, c);
+
+
+            m_colors[y * m_width + x].r = c.g;
+            m_colors[y * m_width + x].g = c.g;
+            m_colors[y * m_width + x].b = c.g;}
         f.ignore(paddingamount);
     }
 }
 
+Color &Image::Gray_operations(float nr, float ng, float nb, Color &c) const {// 1. Transformación a intensidad lineal
+/*Aplicamos la transformación lineal a cada uno de los colores*/Gray_intensidad(nr, ng, nb, c);
 
-// Es una funcion que se encarga de realizar una transformacion de intensidad lineal y transformacion lineal
-// a cada pixel y despues se encarga de realizar una corrección gamma. Toma como parámetros los valores
-// normalizados para cada color (nr,ng,nb) y también el nuevo valor que va a modificar
-// esta funcion para cb, cg y cr.
-float Image::Gray_formula(float nr, float ng, float nb, float cr, float cg, float cb) const {
-    // 1. Transformación a intensidad lineal
-    Gray_intensidad_lineal(nr, ng, nb, cr, cg, cb);
     //2.Transformación lineal
-    float cl = 0.2126 * cr + 0.7152 * cg + 0.0722 * cb;
+    float cl = 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
     //3. Correción gamma
     if (cl <= 0.0031308){
-        cg = 12.92 * cl;}
+        c.g = 12.92 * cl;}
     if (cl > 0.0031308){
-        cg = 1.055 * pow(cl, (1/2.4)) - 0.055;}
-    return cg;
+        c.g = 1.055 * pow(cl, (1/2.4)) - 0.055;}
+    return c;
 }
 
-
-// Esta funcion se encarga de obtener un nuevo color para cada valor normalizado. Toma como parámetros los valores
-// normalizados para cada color (nr,ng,nb) y también el nuevo valor que va a modificar
-// esta funcion para cb, cg y cr.
-void Image::Gray_intensidad_lineal(float nr, float ng, float nb, float &cr, float &cg, float &cb) const {
-    /*Aplicamos la transformación lineal a cada uno de los colores*/
-    // Rojo
+void Image::Gray_intensidad(float nr, float ng, float nb, Color &c) const {// Rojo
     if ( nr <= 0.04045){
-        cr = nr/12.92;}
+        c.r = nr/12.92;}
     if (nr > 0.04045){
         float aux = ((nr+0.055)/1.055);
-        cr = pow(aux, 2.4);}
+        c.r = pow(aux, 2.4);}
     // Green
     if ( ng <= 0.04045){
-        cg = nr/12.92;}
+        c.g = nr/12.92;}
     if (ng > 0.04045){
         float aux = ((nr+0.055)/1.055);
-        cg = pow(aux, 2.4);}
+        c.g = pow(aux, 2.4);}
     // Blue
     if ( nb <= 0.04045){
-        cb = nb/12.92;}
+        c.b = nb/12.92;}
     if (nb > 0.04045){
         float aux = ((nb+0.055)/1.055);
-        cb = pow(aux, 2.4);}
+        c.b = pow(aux, 2.4);}
 }
 
 
@@ -294,66 +289,48 @@ void Image::Gauss_open_create_files(filesystem::path &SRC, const filesystem::pat
 
 // Se encarga de hacer las operaciones necesarias para difuminar la imagen.
 void Image::Gauss_calculations(ifstream &f, const int paddingamount, const vector<Color> &color_aux) {
-
     for (int y =0; y < m_height; y++) {
         for (int pyxel = 0; pyxel < m_width; pyxel++) {
 
-            float final_cr = 0, final_cg = 0, final_cb = 0;
-            /*Para cada pixel obtenemos la suma de las operaciones realizadas en los 25
-             * pixeles de alrededor al pyxel actual ( pyxel , y )*/
-            Gauss_pixeles_alrededor(color_aux, y, pyxel, final_cr, final_cg, final_cb);
-
-            /*metemos los colores finales en el vector m_colors y normalizamos*/
-            m_colors[y * m_width + pyxel].r = final_cr / 273;
-            m_colors[y * m_width + pyxel].g = final_cg / 273;
-            m_colors[y * m_width + pyxel].b = final_cb / 273;
+            Color final = Gauss_operations(color_aux, y, pyxel);
+            m_colors[y * m_width + pyxel].r = final.r / 273;
+            m_colors[y * m_width + pyxel].g = final.g / 273;
+            m_colors[y * m_width + pyxel].b = final.b / 273;
         }
         f.ignore(paddingamount);
     }
 }
 
-void Image::Gauss_pixeles_alrededor(const vector<Color> &color_aux, int y, int pyxel, float &final_cr, float &final_cg, float &final_cb) const {
-
+Color Image::Gauss_operations(const vector<Color> &color_aux, int y, int pyxel) const {
+    Color final;
+    final.r=0;
+    final.g=0;
+    final.b=0;
     for (int sumatorio_s = -2; sumatorio_s < 3; sumatorio_s++) {
         for (int sumatorio_t=-2; sumatorio_t < 3; sumatorio_t++) {
-
-            /*Controlamos que el pyxel no esté fuera de los límites de la imagen.
-             * De ser así, asignamos 0 a las variables de los colores*/
             if ((pyxel + sumatorio_s > m_width) or (pyxel + sumatorio_s < 0) or (y + sumatorio_t > m_height) or (y + sumatorio_t < 0)) {
-                final_cr = final_cr + 0;
-                final_cg = final_cg + 0;
-                final_cb = final_cb + 0;
+                final.r = final.r + 0;
+                final.g = final.g + 0;
+                final.b = final.b + 0;
             }
-                /*cogemos el color del pyxel que está en la posición x = pyxel + sumatorio_s y la posición y = y + sumatorio_t)*/
             else {
-                Gauss_formula(color_aux, y, pyxel, sumatorio_s, sumatorio_t, final_cr, final_cg, final_cb);
+                int mascara[5][5] = {{1, 4,  7,  4,  1},{4, 16, 26, 16, 4},{7, 26, 41, 26, 7},{4, 16, 26, 16, 4},{1, 4,  7,  4,  1}};
+                float nr = (color_aux[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s].r);
+                float ng = (color_aux[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s].g);
+                float nb = (color_aux[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s].b);
 
+                float cr = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  nr;
+                float cg = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  ng;
+                float cb = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  nb;
+
+                final.r = final.r + cr;
+                final.g = final.g + cg;
+                final.b = final.b + cb;
             }
         }
     }
+    return final;
 }
-
-void Image::Gauss_formula(const vector<Color> &color_aux, int y, int pyxel, int sumatorio_s, int sumatorio_t, float &final_cr, float &final_cg, float &final_cb) const {
-    /*Esta función se encarga de calcular el valor para los 25 pixeles alrededor del pyxel central que están
-     * dentro de los límites de la imagen*/
-
-    int mascara[5][5] = {{1, 4,  7,  4,  1},{4, 16, 26, 16, 4},{7, 26, 41, 26, 7},{4, 16, 26, 16, 4},{1, 4,  7,  4,  1}};
-
-    float nr = (color_aux[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s].r);
-    float ng = (color_aux[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s].g);
-    float nb = (color_aux[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s].b);
-
-    /*Calculamos el color para uno de los 25 pixeles que está alrededor del pyxel (x,y) */
-    float cr = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  nr;
-    float cg = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  ng;
-    float cb = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  nb;
-
-    /*le sumamos a la variable que va a recopilar la suma de todos los colores de los 25 pyxeles*/
-    final_cr = final_cr + cr;
-    final_cg = final_cg + cg;
-    final_cb = final_cb + cb;
-}
-
 
 /* Funciones privadas*/
 
