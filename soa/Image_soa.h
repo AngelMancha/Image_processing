@@ -95,4 +95,10 @@ private:
     parametros Gray_operations(float nr, float ng, float nb) const;
 
     parametros &Gray_intensidad(float nr, float ng, float nb, parametros &c) const;
+
+    void Gray_Calculations(std::ifstream &f, const int paddingamount, const Colores &color_aux);
+
+    parametros &Gray_operations(const Colores &color_aux, int y, int pyxel, parametros &final) const;
+
+    Colores Gray_auxiliarvector();
 };

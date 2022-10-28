@@ -414,11 +414,11 @@ void ImageSoa::GaussianBlur(std::filesystem::path SRC, std::filesystem::path DST
     auto end = chrono::steady_clock::now();
     load = chrono::duration_cast<chrono::milliseconds>(end - start).count();
     start = chrono::steady_clock::now();
-    vector<float> color_aux_red;
-    vector<float> color_aux_green;
-    vector<float> color_aux_blue;
-    gauss_aux_vector(color_aux_red, color_aux_green, color_aux_blue);
-    gauss_calculations(f, paddingamount, color_aux_red, color_aux_green, color_aux_blue);
+
+    Colores color_aux = Gray_auxiliarvector();
+
+    Gray_Calculations(f, paddingamount, color_aux);
+
     f.close();
     end = chrono::steady_clock::now();
     operacion = chrono::duration_cast<chrono::milliseconds>(end - start).count();
@@ -426,6 +426,64 @@ void ImageSoa::GaussianBlur(std::filesystem::path SRC, std::filesystem::path DST
     Export2(j, SRC, paddingamount, filesize);
     end = chrono::steady_clock::now();
     store = chrono::duration_cast<chrono::milliseconds>(end - start).count();
+}
+
+Colores ImageSoa::Gray_auxiliarvector() {
+    Colores color_aux;
+
+    for (unsigned long long i=0; i < colores.m_r.size(); i++) {
+        color_aux.m_r.push_back(colores.m_r[i]);
+        color_aux.m_g.push_back(colores.m_g[i]);
+        color_aux.m_b.push_back(colores.m_b[i]);
+    }
+    return color_aux;
+}
+
+void ImageSoa::Gray_Calculations(ifstream &f, const int paddingamount, const Colores &color_aux) {
+    for (int y =0; y < m_height; y++) {
+        for (int pyxel = 0; pyxel < m_width; pyxel++) {
+
+            parametros final;
+            final.r=0;
+            final.g=0;
+            final.b=0;
+
+            final = Gray_operations(color_aux, y, pyxel, final);
+
+            colores.m_r[y * m_width + pyxel] = final.r / 273;
+            colores.m_g[y * m_width + pyxel] = final.g / 273;
+            colores.m_b[y * m_width + pyxel] = final.b / 273;
+        }
+        f.ignore(paddingamount);
+    }
+}
+
+parametros &ImageSoa::Gray_operations(const Colores &color_aux, int y, int pyxel, parametros &final) const {
+    for (int sumatorio_s = -2; sumatorio_s < 3; sumatorio_s++) {
+        for (int sumatorio_t=-2; sumatorio_t < 3; sumatorio_t++) {
+            if ((pyxel + sumatorio_s > m_width) or (pyxel + sumatorio_s < 0) or (y + sumatorio_t > m_height) or (y + sumatorio_t < 0)) {
+
+                final.r = final.r + 0;
+                final.g = final.g + 0;
+                final.b = final.b + 0;
+            }
+            else {
+                int mascara[5][5] = {{1, 4,  7,  4,  1},{4, 16, 26, 16, 4},{7, 26, 41, 26, 7},{4, 16, 26, 16, 4},{1, 4,  7,  4,  1}};
+                float nr = (color_aux.m_r[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s]);
+                float ng = (color_aux.m_g[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s]);
+                float nb = (color_aux.m_b[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s]);
+
+                float cr = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  nr;
+                float cg = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  ng;
+                float cb = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  nb;
+
+                final.r = final.r + cr;
+                final.g = final.g + cg;
+                final.b = final.b + cb;
+            }
+        }
+    }
+    return final;
 }
 
 /*Esta función genera el archivo destino*/
@@ -438,89 +496,6 @@ void ImageSoa::Gauss_open_create_files(filesystem::path &SRC, const filesystem::
 
 /*Esta función se encarga de generar 3 vectores auxiliares para cada uno de los colores
  * a partir de la estructura de arrays original para los colores*/
-
-void ImageSoa::gauss_aux_vector(vector<float> &color_aux_red, vector<float> &color_aux_green,
-                                vector<float> &color_aux_blue) {
-    for (unsigned long long i=0; i < colores.m_r.size(); i++) {
-        color_aux_red.push_back(colores.m_r[i]);
-    }
-    for (unsigned long long i=0; i < colores.m_g.size(); i++) {
-        color_aux_green.push_back(colores.m_g[i]);
-    }
-    for (unsigned long long i=0; i < colores.m_b.size(); i++) {
-        color_aux_blue.push_back(colores.m_b[i]);
-    }
-}
-
-/*gauss_calculations recorre pyxel por pyxel y realiza a cada vector de colores del pyxel la modificación
- * pertinente*/
-void ImageSoa::gauss_calculations(ifstream &f, const int paddingamount, const vector<float> &color_aux_red,
-                                  const vector<float> &color_aux_green, const vector<float> &color_aux_blue) {
-
-    for (int y =0; y < m_height; y++) {
-        for (int pyxel = 0; pyxel < m_width; pyxel++) {
-            float final_cr = 0;
-            float final_cg = 0;
-            float final_cb = 0;
-
-            gauss_pyxeles_alrededor(color_aux_red, color_aux_green, color_aux_blue, y, pyxel, final_cr, final_cg, final_cb);
-
-            colores.m_r[y * m_width + pyxel] = final_cr / 273;
-            colores.m_g[y * m_width + pyxel] = final_cg / 273;
-            colores.m_b[y * m_width + pyxel] = final_cb / 273;
-        }
-        f.ignore(paddingamount);
-    }
-}
-
-/*gauss_pyxeles_alrededor se ejecuta en cada pyxel de la imagen original, y en cada ejecución
- * almacena los valores de los 25 píxeles que hay alrededor del pyxel central que se quiere difuminar.
- * Por lo que va sumando en 3 variables pertenecientes a cada color el valor correspoondiente tras haber
- * aplicado la fórmula de la difusión gausiana y cuando llega a 25 sumas para la ejecución
- * */
-void ImageSoa::gauss_pyxeles_alrededor(const vector<float> &color_aux_red, const vector<float> &color_aux_green,
-                                       const vector<float> &color_aux_blue, int y, int pyxel, float &final_cr,
-                                       float &final_cg, float &final_cb) const {
-    for (int sumatorio_s = -2; sumatorio_s < 3; sumatorio_s++) {
-        for (int sumatorio_t=-2; sumatorio_t < 3; sumatorio_t++) {
-            if ((pyxel + sumatorio_s > m_width) or (pyxel + sumatorio_s < 0) or (y + sumatorio_t > m_height) or (y + sumatorio_t < 0)) {
-
-                final_cr = final_cr + 0;
-                final_cg = final_cg + 0;
-                final_cb = final_cb + 0;
-            }
-
-            else {
-                gauss_formula(color_aux_red, color_aux_green, color_aux_blue, y, pyxel, sumatorio_s,
-                              sumatorio_t, final_cr, final_cg, final_cb);
-            }
-        }
-    }
-}
-
-/*gauss_formula implementa la formula necesaria para realizar los cambios a difusión gausiana,
- * y para ello utiliza la máscara proporcionada*/
-void ImageSoa::gauss_formula(const vector<float> &color_aux_red, const vector<float> &color_aux_green,
-                             const vector<float> &color_aux_blue, int y, int pyxel, int sumatorio_s, int sumatorio_t,
-                             float &final_cr, float &final_cg, float &final_cb) const {
-    int mascara[5][5] = {{1, 4,  7,  4,  1},
-             {4, 16, 26, 16, 4},
-             {7, 26, 41, 26, 7},
-             {4, 16, 26, 16, 4},
-             {1, 4,  7,  4,  1}};
-    float nr = (color_aux_red[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s]);
-
-    float ng = (color_aux_green[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s]);
-    float nb = (color_aux_blue[((y + sumatorio_t) * m_width) + pyxel + sumatorio_s]);
-
-    float cr = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  nr;
-    float cg = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  ng;
-    float cb = (mascara[sumatorio_s + 2][sumatorio_t + 2]) *  nb;
-
-    final_cr = final_cr + cr;
-    final_cg = final_cg + cg;
-    final_cb = final_cb + cb;
-}
 
 
 
