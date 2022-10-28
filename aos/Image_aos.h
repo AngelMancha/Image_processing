@@ -26,18 +26,25 @@ public:
     void Histograma(std::filesystem::path SRC,std::filesystem::path DST);
     static int funcion(std::vector<std::filesystem::path> paths, std::filesystem::path outpath, std::string op);
 
+
+
+    int m_width;
+    int m_height;
+    std::vector<Color> m_colors;
+    /*COMUNES A TODAS LAS FUNCIONES*/
+    void Read(std::filesystem::path path);
+
 private:
-    int m_width; // atributo para definit la altura de la imagen en px
-    int m_height; // atributo para definit la altura de la imagen en px
-    std::vector<Color> m_colors; // vector donde guardamos la ESTRUCTURA de los colores
+    // atributo para definit la altura de la imagen en px
+    // atributo para definit la altura de la imagen en px
+    // vector donde guardamos la ESTRUCTURA de los colores
     int load;
     int store;
     int operacion;
 
-    /*COMUNES A TODAS LAS FUNCIONES*/
     static void openFilein(std::filesystem::path path, std::basic_ifstream<char> &f) ;
     static void openFileout(std::filesystem::path path, std::basic_ofstream<char> &f) ;
-    void Read(std::filesystem::path path);
+
     static void checkHeader(std::filesystem::path path) ;
     void readColor(std::ifstream &f, int paddingamount);
     [[nodiscard]] Color GetColor(int x, int y) const;
