@@ -1,7 +1,7 @@
 ## Image Processing Application
+Ángel José Mancha Núñez, Ruth Navarro Carrasco and Alejandro Pardo Bacuñana and Alicia Gutierrez
 
-
-#Description
+# Description
 
 This image processing application is able to take images in bmp format from a root source and apply a transformation to them (gaussian blur, monocromatic, histogram or copy). Although the main objective relies on being able to identify which design approach in terms of pyxel handle and storage is better:
 
@@ -27,7 +27,7 @@ As previously mentioned, the transformations that the application is able to do 
 - **Histogram**: This function is in charge of storing in the soa or aos the values for the intensities of each channel (rgb).
 
 
-#Deployment
+# Deployment
 ```C
 cmake CMakeLists.txt
 make
@@ -46,7 +46,7 @@ If the desired organization to be executed is AOS:
 ./image-aos in_path out_path mono
 ./image-aos in_path out_path gauss
 ```
-#Conclusions
+# Conclusions
 
 After having studied how the energy and performance are affected by the organization type AOS or SOA, it can be seen that although at first glance there are not very notable differences between both organizations, the truth is that in general terms the AOS organization is more efficient than SOA and generally has higher performance. 
 
