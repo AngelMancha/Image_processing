@@ -15,11 +15,12 @@ As previously mentioned, the transformations that the application is able to do 
 
 - **Gaussian Blur**: It blurs a given image and delivers it to a destination path
 
-![visualizador](media/ambos.png)
+![visualizador](media/gauss1.png)
+![visualizador](media/gauss2.png)
 
 - **Monocromatic**: It turns an image in color into a black and white one.
 
-![visualizador](media/ambos.png)
+![visualizador](media/mono1.png)
 
 - **Copy**: It copies an image from a source path to a destination path.
 
