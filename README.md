@@ -17,7 +17,7 @@ As previously mentioned, the transformations that the application is able to do 
 ![visualizador](media/mono1.png)
 
 
-- **Gaussian Blur transformation **: It blurs a given image and delivers it to a destination path
+- **Gaussian Blur transformation** : It blurs a given image and delivers it to a destination path
 
 ![visualizador](media/gauss1.png)
 ![visualizador](media/gauss2.png)
