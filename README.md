@@ -1,5 +1,5 @@
 ## Image Processing Application
-Ángel José Mancha Núñez, Ruth Navarro Carrasco and Alejandro Pardo Bacuñana and Alicia Gutierrez
+Ángel José Mancha Núñez, Ruth Navarro Carrasco, Alejandro Pardo Bacuñana and Alicia Gutierrez
 
 # Description
 
