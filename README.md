@@ -17,7 +17,7 @@ As previously mentioned, the transformations that the application is able to do 
 ![visualizador](media/mono1.png)
 
 
-- **Gaussian Blur transformation** : It blurs a given image and delivers it to a destination path
+- **Gaussian Blur transformation** : It blurs a given image and delivers it to a destination path.
 
 ![visualizador](media/gauss1.png)
 ![visualizador](media/gauss2.png)
@@ -50,7 +50,6 @@ If the desired organization to be executed is AOS:
 
 After having studied how the energy and performance are affected by the organization type AOS or SOA, it can be seen that although at first glance there are not very notable differences between both organizations, the truth is that in general terms the AOS organization is more efficient than SOA and generally has higher performance. 
 
-This is mainly because in the AOS organization the pixels are stored in an  interleaved way, so this approach is much better than soa for the program since
-each time there is a read failure, the cache will fetch a block from memory containing information that belongs to all the vectors and not just one as would happen in SOA where they are stored sequentially.
+This is mainly because in the AOS organization the pixels are stored in an  interleaved way, so this approach is much better than soa for the program since each time there is a read failure, the cache will fetch a block from memory containing information that belongs to all the vectors and not just one as would happen in SOA where they are stored sequentially.
 
-So in conclusion, **AOS organization is the most efficient one**
+So in conclusion, **AOS organization is the most efficient one.**
