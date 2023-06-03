@@ -12,15 +12,15 @@ This image processing application is able to take images in bmp format from a ro
 
 As previously mentioned, the transformations that the application is able to do are:
 
+- **Monocromatic transformation**: It turns an image in color into a black and white one.
 
-- **Gaussian Blur**: It blurs a given image and delivers it to a destination path
+![visualizador](media/mono1.png)
+
+
+- **Gaussian Blur transformation **: It blurs a given image and delivers it to a destination path
 
 ![visualizador](media/gauss1.png)
 ![visualizador](media/gauss2.png)
-
-- **Monocromatic**: It turns an image in color into a black and white one.
-
-![visualizador](media/mono1.png)
 
 - **Copy**: It copies an image from a source path to a destination path.
 
